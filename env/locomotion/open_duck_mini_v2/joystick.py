@@ -570,10 +570,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     # print('dof_pos_limits: {}',self._cost_joint_pos_limits(data.qpos[7:]))
     # print('pose: {}',self._cost_pose(data.qpos[7:]))
 
-
-
-
-    return {
+    ret =  {
         # Tracking rewards.
         "tracking_lin_vel": self._reward_tracking_lin_vel(
             info["command"], self.get_local_linvel(data)
@@ -619,6 +616,11 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:]),
         "pose": self._cost_pose(data.qpos[7:]),
     }
+    # print("==")
+    # for key, value in ret.items():
+    #   print(key, value.val())
+    # print("==")
+    return ret
 
   # Tracking rewards.
 

@@ -195,6 +195,7 @@ if "network_factory" in ppo_params:
       **ppo_params.network_factory
   )
 print(f"PPO PARAMS: {ppo_training_params}")
+ppo_training_params["num_timesteps"] = 1500000000
 
 ckpt_path = epath.Path('/home/antoine/MISC/openduckminiv2_playground/openduckminiv2_playground/ckpts')
 ckpt_path.mkdir(parents=True, exist_ok=True)
