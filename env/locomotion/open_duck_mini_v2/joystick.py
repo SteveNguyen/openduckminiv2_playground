@@ -43,7 +43,7 @@ def default_config() -> config_dict.ConfigDict:
       history_len=1,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
-          level=1.0,  # Set to 0.0 to disable noise.
+          level=0.0,  # Set to 0.0 to disable noise.
           scales=config_dict.create(
               hip_pos=0.03,  # rad #for each hip joint
               kfe_pos=0.05, # kfe=Knee Pitch
