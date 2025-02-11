@@ -115,7 +115,6 @@ env_cfg = registry.get_default_config(env_name)
 # ppo_params = locomotion_params.brax_ppo_config(env_name)
 ppo_params = locomotion_params.brax_ppo_config('BerkeleyHumanoidJoystickFlatTerrain') #TODO
 
-# In[30]:
 print("ENVIRONEMENT LOADED")
 
 
@@ -182,7 +181,7 @@ if "network_factory" in ppo_params:
   )
 print(f"PPO PARAMS: {ppo_training_params}")
 
-ckpt_path = epath.Path('/home/steve/Project/Repo/openduckminiv2_playground/ckpts')
+ckpt_path = epath.Path('/home/antoine/MISC/openduckminiv2_playground/openduckminiv2_playground/ckpts')
 ckpt_path.mkdir(parents=True, exist_ok=True)
 
 def policy_params_fn(current_step, make_policy, params):

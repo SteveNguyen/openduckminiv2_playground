@@ -92,11 +92,11 @@ def default_config() -> config_dict.ConfigDict:
       push_config=config_dict.create(
           enable=True,
           interval_range=[5.0, 10.0],
-          magnitude_range=[0.01, 0.5],
+          magnitude_range=[0.01, 0.1],
       ),
-      lin_vel_x=[-1.0, 1.0],
-      lin_vel_y=[-1.0, 1.0],
-      ang_vel_yaw=[-1.0, 1.0],
+      lin_vel_x=[-0.2, 0.3],
+      lin_vel_y=[-0.2, 0.2],
+      ang_vel_yaw=[-0.5, 0.5],
   )
 
 
@@ -267,7 +267,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     # Phase, freq=U(0.5, 2.5)
     rng, key = jax.random.split(rng)
-    gait_freq = jax.random.uniform(key, (1,), minval=1.25, maxval=2.0)
+    gait_freq = jax.random.uniform(key, (1,), minval=1.9, maxval=2.3)
     phase_dt = 2 * jp.pi * self.dt * gait_freq
     phase = jp.array([0, jp.pi])
 
@@ -461,6 +461,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         info["last_act"],  # 10
         phase,
     ])
+
 
     accelerometer = self.get_accelerometer(data)
     global_angvel = self.get_global_angvel(data)
@@ -684,7 +685,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       qpos: jax.Array,
   ) -> jax.Array:
     cmd_norm = jp.linalg.norm(commands)
-    return jp.nan_to_num(jp.sum(jp.abs(qpos - self._default_pose)) * (cmd_norm < 0.1))
+    return jp.nan_to_num(jp.sum(jp.abs(qpos - self._default_pose)) * (cmd_norm < 0.01))
 
   def _cost_termination(self, done: jax.Array) -> jax.Array:
     return done
@@ -757,7 +758,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     air_time = (air_time - threshold_min) * first_contact
     air_time = jp.clip(air_time, max=threshold_max - threshold_min)
     reward = jp.sum(air_time)
-    reward *= cmd_norm > 0.1  # No reward for zero commands.
+    reward *= cmd_norm > 0.01  # No reward for zero commands.
     return jp.nan_to_num(reward)
 
   def _reward_feet_phase(

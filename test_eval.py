@@ -141,7 +141,7 @@ rng = jax.random.PRNGKey(1)
 rollout = []
 modify_scene_fns = []
 
-x_vel = 1.0  #@param {type: "number"}
+x_vel = 0.1  #@param {type: "number"}
 y_vel = 0.0  #@param {type: "number"}
 yaw_vel = 0.0  #@param {type: "number"}
 command = jp.array([x_vel, y_vel, yaw_vel])
