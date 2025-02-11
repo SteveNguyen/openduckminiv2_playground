@@ -49,10 +49,10 @@ def default_config() -> config_dict.ConfigDict:
               kfe_pos=0.05, # kfe=Knee Pitch
               ffe_pos=0.08, #ffe=Ankle pitch
               # faa_pos=0.03, #ffa=Ankle Roll #FIXME!
-              joint_vel=1.5,  # rad/s
+              joint_vel=1.5,  # rad/s # TODO try to reduce
               gravity=0.05,
               linvel=0.1,
-              gyro=0.2,  # angvel.
+              gyro=0.2,  # angvel. # TODO try to reduce
           ),
       ),
       reward_config=config_dict.create(

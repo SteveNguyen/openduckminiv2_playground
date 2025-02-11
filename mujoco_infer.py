@@ -16,14 +16,24 @@ import pickle
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-o", "--onnx_model_path", type=str, required=True)
+parser.add_argument("-k", action="store_true", default=False)
 args = parser.parse_args()
+
+
+if args.k:
+    import pygame
+
+    pygame.init()
+    # open a blank pygame window
+    screen = pygame.display.set_mode((100, 100))
+    pygame.display.set_caption("Press arrow keys to move robot")
 
 # Params
 linearVelocityScale = 1.0
 angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 1.0
-action_scale = 0.5
+action_scale = 1.0
 
 
 init_pos = np.array(
@@ -61,10 +71,10 @@ policy = OnnxInfer(args.onnx_model_path, awd=True)
 
 COMMANDS_RANGE_X = [-0.2, 0.3]
 COMMANDS_RANGE_Y = [-0.2, 0.2]
-COMMANDS_RANGE_THETA = [-0.3, 0.3]
+COMMANDS_RANGE_THETA = [-0.5, 0.5]
 
 prev_action = np.zeros(10)
-commands = [0.2, 0.0, 0.0]
+commands = [0.1, 0.0, 0.0]
 decimation = 10
 data.qpos[3 : 3 + 4] = [1, 0, 0.0, 0]
 
@@ -167,9 +177,54 @@ def get_obs(data, last_action, command):
     return obs
 
 
+def key_callback(keycode):
+    # backspace
+    pass
+    # if keycode == 259:
+    #     data.qpos[7:] = init_pos
+    #     data.ctrl[:] = init_pos
+    #     time.sleep(0.1)
+
+
+def handle_keyboard():
+    global commands
+    keys = pygame.key.get_pressed()
+    lin_vel_x = 0
+    lin_vel_y = 0
+    ang_vel = 0
+    if keys[pygame.K_z]:
+        lin_vel_x = COMMANDS_RANGE_X[1]
+    if keys[pygame.K_s]:
+        lin_vel_x = COMMANDS_RANGE_X[0]
+    if keys[pygame.K_q]:
+        lin_vel_y = COMMANDS_RANGE_Y[1]
+    if keys[pygame.K_d]:
+        lin_vel_y = COMMANDS_RANGE_Y[0]
+    if keys[pygame.K_a]:
+        ang_vel = COMMANDS_RANGE_THETA[1]
+    if keys[pygame.K_e]:
+        ang_vel = COMMANDS_RANGE_THETA[0]
+
+    commands[0] = lin_vel_x
+    commands[1] = lin_vel_y
+    commands[2] = ang_vel
+    print(commands)
+    # commands = list(
+    #     np.array(commands)
+    #     * np.array(
+    #         [
+    #             linearVelocityScale,
+    #             linearVelocityScale,
+    #             angularVelocityScale,
+    #         ]
+    #     )
+    # )
+    pygame.event.pump()  # process event queue
+
+
 try:
     with mujoco.viewer.launch_passive(
-        model, data, show_left_ui=False, show_right_ui=False
+        model, data, show_left_ui=False, show_right_ui=False, key_callback=key_callback
     ) as viewer:
         counter = 0
         while True:
@@ -190,6 +245,9 @@ try:
                 action = action * action_scale + init_pos
                 data.ctrl = action.copy()
             viewer.sync()
+
+            if args.k:
+                handle_keyboard()
 
             # Was
             time_until_next_step = model.opt.timestep - (time.time() - step_start)
