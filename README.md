@@ -9,7 +9,7 @@ To create a venv:
 `source .venv/bin/activate`
 
 Export onnx : 
-`uv run utils/export_onnx.py <absolute_path_to_ckpt>`
+`uv run export_onnx.py <absolute_path_to_ckpt>`
 
 Infer mujoco
 `uv run mujoco_infer <path_to_.onnx>

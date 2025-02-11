@@ -7,7 +7,7 @@ import argparse
 
 # from mini_bdx.utils.mujoco_utils import check_contact
 
-from utils.onnx_infer import OnnxInfer
+from onnx_infer import OnnxInfer
 import pickle
 
 # from bam.model import load_model
@@ -143,14 +143,6 @@ def get_phase():
 
 
 def get_obs(data, last_action, command):
-    # linvel
-    # gyro
-    # gravity
-    # command
-    # joint_angles - defulat pose
-    # joint vel
-    # last action
-    # phase
 
     gyro = get_gyro(data)
     linvel = get_linvel(data)
@@ -171,17 +163,6 @@ def get_obs(data, last_action, command):
             phase,
         ]
     )
-    # print("len linvel", len(linvel))
-    # print("len gyro", len(gyro))
-    # print("len gravity", len(gravity))
-    # print("len command", len(command))
-    # print("len joint_angles", len(joint_angles))
-    # print("len joint_vel", len(joint_vel))
-    # print("len last_action", len(last_action))
-    # print("len phase", len(phase))
-
-    # print("len obs", len(obs))
-    # exit()
 
     return obs
 

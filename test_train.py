@@ -1,5 +1,7 @@
+import pickle
 from env.locomotion.open_duck_mini_v2 import joystick as open_duck_mini_v2_joystick
 from env.locomotion.open_duck_mini_v2 import randomize as open_duck_mini_v2_randomize
+from export_onnx import export_onnx
 
 from mujoco_playground._src import registry
 from mujoco_playground._src import locomotion
@@ -57,6 +59,13 @@ from jax import config as jaxconfig
 # jax.config.update('jax_default_device', jax.devices('cpu')[0])
 
 
+# CACHE STUFF
+jax.config.update("jax_compilation_cache_dir", "/tmp/jax_cache")
+jax.config.update("jax_persistent_cache_min_entry_size_bytes", -1)
+jax.config.update("jax_persistent_cache_min_compile_time_secs", 0)
+jax.config.update("jax_persistent_cache_enable_xla_caches", "xla_gpu_per_fusion_autotune_cache_dir")
+
+
 
 #####
 import os
@@ -92,6 +101,9 @@ os.environ['MUJOCO_GL']='egl'
 xla_flags = os.environ.get('XLA_FLAGS', '')
 xla_flags += ' --xla_gpu_triton_gemm_any=True'
 os.environ['XLA_FLAGS'] = xla_flags
+os.environ["JAX_COMPILATION_CACHE_DIR"] = "/tmp/jax_cache"
+
+
 
 
 
@@ -111,6 +123,8 @@ env_name = 'OpenDuckMiniV2JoystickFlatTerrain'
 
 
 env = registry.load(env_name)
+obs_size = int(env.observation_size["state"][0])
+action_size = int(env.action_size)
 env_cfg = registry.get_default_config(env_name)
 # ppo_params = locomotion_params.brax_ppo_config(env_name)
 ppo_params = locomotion_params.brax_ppo_config('BerkeleyHumanoidJoystickFlatTerrain') #TODO
@@ -172,6 +186,7 @@ def progress(num_steps, metrics):
 
 randomizer = registry.get_domain_randomizer(env_name)
 ppo_training_params = dict(ppo_params)
+# ppo_training_params["num_envs"] = 64
 network_factory = ppo_networks.make_ppo_networks
 if "network_factory" in ppo_params:
   del ppo_training_params["network_factory"]
@@ -193,6 +208,11 @@ def policy_params_fn(current_step, make_policy, params):
   path = ckpt_path / f'{d}_{current_step}'
   print(f'Saving checkpoint (step: {current_step}): {path}')
   orbax_checkpointer.save(path, params, force=True, save_args=save_args)
+  # print(params.keys())
+  # pickle.dump(params, open('params.pkl', 'wb'))
+  # print([x.keys() for x in params])
+  export_onnx(params, action_size, ppo_params, obs_size)
+
 
 print("NETWORK CREATED")
 
