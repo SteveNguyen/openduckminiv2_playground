@@ -103,8 +103,8 @@
     <geom contype="0" conaffinity="0"/>
     <!-- <geom contype="0" conaffinity="1"/> -->
 
-    <joint damping="0.0" frictionloss="0.083" armature="0.027"/>
-    <position kp="6.55" kv="0.65" forcerange="-3.57 3.57"/>
+    <joint damping="0.65" frictionloss="0.083" armature="0.027"/>
+    <position kp="6.55" kv="0.0" forcerange="-3.57 3.57"/>
   </default>
   <contact>
     <exclude name="exclude1" body1="trunk_assembly" body2="neck_yaw_assembly"/>

@@ -81,10 +81,6 @@ data.qpos[3 : 3 + 4] = [1, 0, 0.0, 0]
 data.qpos[7:] = init_pos
 data.ctrl[:] = init_pos
 
-replay_index = 0
-saved_obs = []
-
-
 def check_contact(data, model, body1_name, body2_name):
     body1_id = data.body(body1_name).id
     body2_id = data.body(body2_name).id
@@ -208,51 +204,38 @@ def handle_keyboard():
     commands[0] = lin_vel_x
     commands[1] = lin_vel_y
     commands[2] = ang_vel
-    print(commands)
-    # commands = list(
-    #     np.array(commands)
-    #     * np.array(
-    #         [
-    #             linearVelocityScale,
-    #             linearVelocityScale,
-    #             angularVelocityScale,
-    #         ]
-    #     )
-    # )
+
     pygame.event.pump()  # process event queue
 
 
-try:
-    with mujoco.viewer.launch_passive(
-        model, data, show_left_ui=False, show_right_ui=False, key_callback=key_callback
-    ) as viewer:
-        counter = 0
-        while True:
+with mujoco.viewer.launch_passive(
+    model, data, show_left_ui=False, show_right_ui=False, key_callback=key_callback
+) as viewer:
+    counter = 0
+    while True:
 
-            step_start = time.time()  # Was
+        step_start = time.time()  # Was
 
-            mujoco.mj_step(model, data)
+        mujoco.mj_step(model, data)
 
-            counter += 1
-            if counter % decimation == 0:
-                obs = get_obs(data, prev_action, commands)
-                saved_obs.append(obs)
+        counter += 1
+        if counter % decimation == 0:
+            obs = get_obs(data, prev_action, commands)
 
-                action = policy.infer(obs)
+            action = policy.infer(obs)
 
-                prev_action = action.copy()
+            prev_action = action.copy()
 
-                action = action * action_scale + init_pos
-                data.ctrl = action.copy()
-            viewer.sync()
+            action = action * action_scale + init_pos
+            data.ctrl = action.copy()
 
-            if args.k:
-                handle_keyboard()
+        viewer.sync()
 
-            # Was
-            time_until_next_step = model.opt.timestep - (time.time() - step_start)
-            if time_until_next_step > 0:
-                time.sleep(time_until_next_step)
+        if args.k:
+            handle_keyboard()
 
-except KeyboardInterrupt:
-    pickle.dump(saved_obs, open("mujoco_saved_obs.pkl", "wb"))
+        # Was
+        time_until_next_step = model.opt.timestep - (time.time() - step_start)
+        if time_until_next_step > 0:
+            time.sleep(time_until_next_step)
+
