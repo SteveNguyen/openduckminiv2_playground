@@ -459,9 +459,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         noisy_joint_angles - self._default_pose,  # 10
         noisy_joint_vel,  # 10
         info["last_act"],  # 10
-        phase,
+        phase, # 4
     ])
-
 
     accelerometer = self.get_accelerometer(data)
     global_angvel = self.get_global_angvel(data)

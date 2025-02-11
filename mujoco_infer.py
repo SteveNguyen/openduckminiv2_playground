@@ -64,7 +64,7 @@ COMMANDS_RANGE_Y = [-0.2, 0.2]
 COMMANDS_RANGE_THETA = [-0.3, 0.3]
 
 prev_action = np.zeros(10)
-commands = [0.3, 0.0, 0.0]
+commands = [0.2, 0.0, 0.0]
 decimation = 10
 data.qpos[3 : 3 + 4] = [1, 0, 0.0, 0]
 
@@ -113,7 +113,7 @@ imu_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "imu")
 gait_freq = 2
 control_dt = model.opt.timestep * decimation
 phase_dt = 2 * np.pi * control_dt * gait_freq
-current_phase = 0
+current_phase = np.array([0, 0])
 
 
 def get_sensor(model, data, name, dimensions):
@@ -139,7 +139,7 @@ def get_phase():
     current_phase = np.fmod(phase_tp1 + np.pi, 2 * np.pi) - np.pi
     cos = np.cos(current_phase)
     sin = np.sin(current_phase)
-    return [cos, sin]
+    return np.concatenate([cos, sin])
 
 
 def get_obs(data, last_action, command):
@@ -161,7 +161,6 @@ def get_obs(data, last_action, command):
 
     obs = np.concatenate(
         [
-            [0, 0], 
             linvel,
             gyro,
             gravity,
@@ -170,7 +169,6 @@ def get_obs(data, last_action, command):
             joint_vel,
             last_action,
             phase,
-            # [0, 0]
         ]
     )
     # print("len linvel", len(linvel))
