@@ -64,7 +64,7 @@ def default_config() -> config_dict.ConfigDict:
               lin_vel_z=0.0,
               ang_vel_xy=-0.15,
               orientation=-1.0,
-              base_height=0.0,
+              base_height=0.5,
               # Energy related rewards.
               torques=-2.5e-5,
               action_rate=-0.01,
@@ -77,7 +77,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_phase=1.0,
               # Other rewards.
               stand_still=0.0,
-              alive=0.0,
+              alive=1.0,
               termination=-1.0,
               # Pose related rewards.
               joint_deviation_knee=-0.1,
@@ -94,9 +94,12 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.01, 0.1],
       ),
-      lin_vel_x=[-0.2, 0.3],
-      lin_vel_y=[-0.2, 0.2],
-      ang_vel_yaw=[-0.5, 0.5],
+      lin_vel_x=[0.3, 0.3],
+      lin_vel_y=[0.0, 0.0],
+      ang_vel_yaw=[0.0, 0.0],
+      # lin_vel_x=[-0.2, 0.3],
+      # lin_vel_y=[-0.2, 0.2],
+      # ang_vel_yaw=[-0.5, 0.5],
   )
 
 
