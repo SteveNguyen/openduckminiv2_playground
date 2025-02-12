@@ -27,7 +27,7 @@ linearVelocityScale = 1.0
 angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 1.0
-action_scale = 0.5
+action_scale = 0.25
 
 
 init_pos = np.array(
@@ -131,8 +131,8 @@ def get_obs(data, last_action, command):
 
     obs = np.concatenate(
         [
-            linvel,
-            gyro,
+            # linvel,
+            # gyro,
             gravity,
             command,
             joint_angles - init_pos,
