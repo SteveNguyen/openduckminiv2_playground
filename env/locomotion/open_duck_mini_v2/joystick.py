@@ -39,7 +39,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=1000,
       action_repeat=1,
-      action_scale=0.25,
+      action_scale=0.5,
       history_len=1,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
@@ -49,7 +49,7 @@ def default_config() -> config_dict.ConfigDict:
               kfe_pos=0.05, # kfe=Knee Pitch
               ffe_pos=0.08, #ffe=Ankle pitch
               # faa_pos=0.03, #ffa=Ankle Roll #FIXME!
-              joint_vel=0.5,  # rad/s # Was 1.5
+              joint_vel=1.5,  # rad/s # Was 1.5
               gravity=0.05,
               linvel=0.1,
               gyro=0.1,  # angvel. # was 0.2
@@ -92,11 +92,8 @@ def default_config() -> config_dict.ConfigDict:
       push_config=config_dict.create(
           enable=True,
           interval_range=[5.0, 10.0],
-          magnitude_range=[0.01, 0.5],
+          magnitude_range=[0.01, 1.0],
       ),
-      # lin_vel_x=[0.3, 0.3],
-      # lin_vel_y=[0.0, 0.0],
-      # ang_vel_yaw=[0.0, 0.0],
       lin_vel_x=[-0.2, 0.3],
       lin_vel_y=[-0.2, 0.2],
       ang_vel_yaw=[-0.5, 0.5],

@@ -27,7 +27,7 @@ linearVelocityScale = 1.0
 angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 1.0
-action_scale = 0.25
+action_scale = 0.5
 
 
 init_pos = np.array(
