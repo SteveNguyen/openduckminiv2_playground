@@ -94,12 +94,12 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.01, 0.1],
       ),
-      lin_vel_x=[0.3, 0.3],
-      lin_vel_y=[0.0, 0.0],
-      ang_vel_yaw=[0.0, 0.0],
-      # lin_vel_x=[-0.2, 0.3],
-      # lin_vel_y=[-0.2, 0.2],
-      # ang_vel_yaw=[-0.5, 0.5],
+      # lin_vel_x=[0.3, 0.3],
+      # lin_vel_y=[0.0, 0.0],
+      # ang_vel_yaw=[0.0, 0.0],
+      lin_vel_x=[-0.2, 0.3],
+      lin_vel_y=[-0.2, 0.2],
+      ang_vel_yaw=[-0.5, 0.5],
   )
 
 
@@ -270,7 +270,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     # Phase, freq=U(0.5, 2.5)
     rng, key = jax.random.split(rng)
-    gait_freq = jax.random.uniform(key, (1,), minval=1.9, maxval=2.3)
+    gait_freq = jax.random.uniform(key, (1,), minval=2, maxval=2.5)
     phase_dt = 2 * jp.pi * self.dt * gait_freq
     phase = jp.array([0, jp.pi])
 
