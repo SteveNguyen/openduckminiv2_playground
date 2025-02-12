@@ -174,35 +174,40 @@ def handle_keyboard():
 
     pygame.event.pump()  # process event queue
 
+saved_obs = []
 
-with mujoco.viewer.launch_passive(
-    model, data, show_left_ui=False, show_right_ui=False, key_callback=key_callback
-) as viewer:
-    counter = 0
-    while True:
+try:
 
-        step_start = time.time()
+    with mujoco.viewer.launch_passive(
+        model, data, show_left_ui=False, show_right_ui=False, key_callback=key_callback
+    ) as viewer:
+        counter = 0
+        while True:
 
-        mujoco.mj_step(model, data)
+            step_start = time.time()
 
-        counter += 1
-        if counter % decimation == 0:
-            obs = get_obs(data, prev_action, commands)
+            mujoco.mj_step(model, data)
 
-            action = policy.infer(obs)
+            counter += 1
+            if counter % decimation == 0:
+                obs = get_obs(data, prev_action, commands)
+                saved_obs.append(obs)
+                action = policy.infer(obs)
 
-            prev_action = action.copy()
+                prev_action = action.copy()
 
-            action = init_pos + action * action_scale
-            data.ctrl = action.copy()
+                action = init_pos + action * action_scale
+                data.ctrl = action.copy()
 
-        viewer.sync()
+            viewer.sync()
 
-        if args.k:
-            handle_keyboard()
+            if args.k:
+                handle_keyboard()
 
-        # pickle.dump(phases, open("phases.pkl", "wb"))
+            # pickle.dump(phases, open("phases.pkl", "wb"))
 
-        time_until_next_step = model.opt.timestep - (time.time() - step_start)
-        if time_until_next_step > 0:
-            time.sleep(time_until_next_step)
+            time_until_next_step = model.opt.timestep - (time.time() - step_start)
+            if time_until_next_step > 0:
+                time.sleep(time_until_next_step)
+except KeyboardInterrupt:
+    pickle.dump(saved_obs, open("mujoco_saved_obs.pkl", "wb"))
