@@ -43,16 +43,16 @@ def default_config() -> config_dict.ConfigDict:
       history_len=1,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
-          level=0.0,  # Set to 0.0 to disable noise.
+          level=1.0,  # Set to 0.0 to disable noise.
           scales=config_dict.create(
               hip_pos=0.03,  # rad #for each hip joint
               kfe_pos=0.05, # kfe=Knee Pitch
               ffe_pos=0.08, #ffe=Ankle pitch
               # faa_pos=0.03, #ffa=Ankle Roll #FIXME!
-              joint_vel=1.5,  # rad/s # TODO try to reduce
+              joint_vel=0.5,  # rad/s # Was 1.5
               gravity=0.05,
               linvel=0.1,
-              gyro=0.2,  # angvel. # TODO try to reduce
+              gyro=0.1,  # angvel. # TODO try to reduce
           ),
       ),
       reward_config=config_dict.create(
@@ -90,7 +90,7 @@ def default_config() -> config_dict.ConfigDict:
           base_height_target=0.15, #0.5,
       ),
       push_config=config_dict.create(
-          enable=False,
+          enable=True,
           interval_range=[5.0, 10.0],
           magnitude_range=[0.01, 0.1],
       ),

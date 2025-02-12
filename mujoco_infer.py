@@ -74,7 +74,7 @@ COMMANDS_RANGE_Y = [-0.2, 0.2]
 COMMANDS_RANGE_THETA = [-0.5, 0.5]
 
 prev_action = np.zeros(10)
-commands = [0.1, 0.0, 0.0]
+commands = [0.2, 0.0, 0.0]
 decimation = 10
 data.qpos[3 : 3 + 4] = [1, 0, 0.0, 0]
 
