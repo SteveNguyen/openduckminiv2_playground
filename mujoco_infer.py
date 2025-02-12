@@ -225,7 +225,7 @@ with mujoco.viewer.launch_passive(
             action = policy.infer(obs)
 
             prev_action = action.copy()
-
+            
             action = action * action_scale + init_pos
             data.ctrl = action.copy()
 
