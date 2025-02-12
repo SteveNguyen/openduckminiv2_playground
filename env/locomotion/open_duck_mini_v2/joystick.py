@@ -39,7 +39,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=1000,
       action_repeat=1,
-      action_scale=1.0, # was 0.5
+      action_scale=0.5, # was 0.5
       history_len=1,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
@@ -798,7 +798,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     # With 10% chance, set everything to zero.
     return jp.where(
-        jax.random.bernoulli(rng4, p=0.0),
+        jax.random.bernoulli(rng4, p=0.0), # changed to 0% chance to debug
         jp.zeros(3),
         jp.hstack([lin_vel_x, lin_vel_y, ang_vel_yaw]),
     )

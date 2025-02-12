@@ -209,9 +209,6 @@ def policy_params_fn(current_step, make_policy, params):
   path = ckpt_path / f'{d}_{current_step}'
   print(f'Saving checkpoint (step: {current_step}): {path}')
   orbax_checkpointer.save(path, params, force=True, save_args=save_args)
-  # print(params.keys())
-  # pickle.dump(params, open('params.pkl', 'wb'))
-  # print([x.keys() for x in params])
   export_onnx(params, action_size, ppo_params, obs_size)
 
 
