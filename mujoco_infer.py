@@ -5,14 +5,7 @@ import mujoco.viewer
 import time
 import argparse
 
-# from mini_bdx.utils.mujoco_utils import check_contact
-
 from onnx_infer import OnnxInfer
-import pickle
-
-# from bam.model import load_model
-# from bam.mujoco import MujocoController
-# from mini_bdx_runtime.rl_utils import mujoco_joints_order
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-o", "--onnx_model_path", type=str, required=True)
@@ -81,40 +74,15 @@ data.qpos[3 : 3 + 4] = [1, 0, 0.0, 0]
 data.qpos[7:] = init_pos
 data.ctrl[:] = init_pos
 
-def check_contact(data, model, body1_name, body2_name):
-    body1_id = data.body(body1_name).id
-    body2_id = data.body(body2_name).id
 
-    for i in range(data.ncon):
-        try:
-            contact = data.contact[i]
-        except Exception as e:
-            return False
-
-        if (
-            model.geom_bodyid[contact.geom1] == body1_id
-            and model.geom_bodyid[contact.geom2] == body2_id
-        ) or (
-            model.geom_bodyid[contact.geom1] == body2_id
-            and model.geom_bodyid[contact.geom2] == body1_id
-        ):
-            return True
-
-    return False
-
-
-def get_feet_contact():
-    left_contact = check_contact(data, model, "foot_assembly", "floor")
-    right_contact = check_contact(data, model, "foot_assembly_2", "floor")
-    return [left_contact, right_contact]
-
-
-# gyro_id = model.sensor_name2id("gyro")
 gyro_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "gyro")
 gyro_dimensions = 3
-# linvel_id = model.sensor_name2id("local_linvel")
 linvel_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "local_linvel")
 linvel_dimensions = 3
+# gravity_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "upvector")
+# gravity_dimensions = 3
+
+
 imu_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "imu")
 gait_freq = 2
 control_dt = model.opt.timestep * decimation
@@ -136,7 +104,7 @@ def get_linvel(data):
 
 
 def get_gravity(data):
-    return data.site_xmat[imu_site_id].reshape((3, 3)) @ np.array([0, 0, -1])
+    return data.site_xmat[imu_site_id].reshape((3, 3)).T @ np.array([0, 0, -1])
 
 
 def get_phase():
@@ -226,7 +194,7 @@ with mujoco.viewer.launch_passive(
 
             prev_action = action.copy()
             
-            action = action * action_scale + init_pos
+            action = init_pos + action * action_scale
             data.ctrl = action.copy()
 
         viewer.sync()

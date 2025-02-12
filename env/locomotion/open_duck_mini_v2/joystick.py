@@ -52,7 +52,7 @@ def default_config() -> config_dict.ConfigDict:
               joint_vel=0.5,  # rad/s # Was 1.5
               gravity=0.05,
               linvel=0.1,
-              gyro=0.1,  # angvel. # TODO try to reduce
+              gyro=0.1,  # angvel. # was 0.2
           ),
       ),
       reward_config=config_dict.create(
@@ -86,8 +86,8 @@ def default_config() -> config_dict.ConfigDict:
               pose=-1.0,
           ),
           tracking_sigma=0.5,
-          max_foot_height=0.03, #0.1,
-          base_height_target=0.15, #0.5,
+          max_foot_height=0.03,  #0.1,
+          base_height_target=0.15,  #0.5,
       ),
       push_config=config_dict.create(
           enable=True,
