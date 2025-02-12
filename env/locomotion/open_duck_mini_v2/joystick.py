@@ -58,8 +58,8 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=2.0,
-              tracking_ang_vel=1.5,
+              tracking_lin_vel=1.0,
+              tracking_ang_vel=0.5,
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=-0.15,
@@ -85,7 +85,7 @@ def default_config() -> config_dict.ConfigDict:
               dof_pos_limits=-1.0,
               pose=-1.0,
           ),
-          tracking_sigma=0.5,
+          tracking_sigma=0.01,
           max_foot_height=0.03,  #0.1,
           base_height_target=0.15,  #0.5,
       ),

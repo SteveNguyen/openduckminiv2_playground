@@ -1,4 +1,5 @@
 import mujoco
+import pickle
 import numpy as np
 
 import mujoco.viewer
@@ -116,7 +117,9 @@ def get_phase():
     return np.concatenate([cos, sin])
 
 
+# phases = []
 def get_obs(data, last_action, command):
+    # global phases
 
     gyro = get_gyro(data)
     linvel = get_linvel(data)
@@ -124,6 +127,7 @@ def get_obs(data, last_action, command):
     joint_angles = data.qpos[7:]
     joint_vel = data.qvel[6:]
     phase = get_phase()
+    # phases.append(phase)
 
     obs = np.concatenate(
         [
@@ -142,12 +146,7 @@ def get_obs(data, last_action, command):
 
 
 def key_callback(keycode):
-    # backspace
     pass
-    # if keycode == 259:
-    #     data.qpos[7:] = init_pos
-    #     data.ctrl[:] = init_pos
-    #     time.sleep(0.1)
 
 
 def handle_keyboard():
@@ -182,7 +181,7 @@ with mujoco.viewer.launch_passive(
     counter = 0
     while True:
 
-        step_start = time.time()  # Was
+        step_start = time.time()
 
         mujoco.mj_step(model, data)
 
@@ -193,7 +192,7 @@ with mujoco.viewer.launch_passive(
             action = policy.infer(obs)
 
             prev_action = action.copy()
-            
+
             action = init_pos + action * action_scale
             data.ctrl = action.copy()
 
@@ -202,8 +201,8 @@ with mujoco.viewer.launch_passive(
         if args.k:
             handle_keyboard()
 
-        # Was
+        # pickle.dump(phases, open("phases.pkl", "wb"))
+
         time_until_next_step = model.opt.timestep - (time.time() - step_start)
         if time_until_next_step > 0:
             time.sleep(time_until_next_step)
-
