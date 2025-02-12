@@ -372,5 +372,7 @@
     <framequat objtype="site" objname="imu" name="orientation"/>
     <framelinvel objtype="site" objname="right_foot" name="right_foot_global_linvel"/>
     <framelinvel objtype="site" objname="left_foot" name="left_foot_global_linvel"/>
+    <framepos objtype="site" objname="left_foot" name="left_foot_pos"/>
+    <framepos objtype="site" objname="right_foot" name="right_foot_pos"/>
   </sensor>
 </mujoco>
