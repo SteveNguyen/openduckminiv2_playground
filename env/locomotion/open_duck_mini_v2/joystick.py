@@ -467,6 +467,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         * self._config.noise_config.scales.linvel
     )
 
+    print("qpos error history", qpos_error_history)
+    print("qvel history", qpos_error_history)
+
     state = jp.hstack([
         # noisy_linvel,  # 3
         # noisy_gyro,  # 3
@@ -499,6 +502,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         contact,  # 2
         feet_vel,  # 4*3
         info["feet_air_time"],  # 2
+        qpos_error_history,
+        qvel_history,
     ])
 
     # jax.debug.print("STATE: {}",state)

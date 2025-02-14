@@ -28,7 +28,7 @@ angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 1.0
 action_scale = 0.5
-
+history_len = 3
 
 init_pos = np.array(
     [
@@ -90,6 +90,8 @@ control_dt = model.opt.timestep * decimation
 phase_dt = 2 * np.pi * control_dt * gait_freq
 current_phase = np.array([0, 0])
 
+qpos_error_history = np.zeros(history_len * 10)
+qvel_history = np.zeros(history_len * 10)
 
 def get_sensor(model, data, name, dimensions):
     i = model.sensor_name2id(name)
@@ -129,6 +131,13 @@ def get_obs(data, last_action, command):
     phase = get_phase()
     # phases.append(phase)
 
+    qvel_history = np.roll(qvel_history, 10)
+    qvel_history[:10] = joint_vel
+
+    qpos_error = joint_angles - last_action
+    qpos_error_history = np.roll(qpos_error_history, 10)
+    qpos_error_history[:10] = qpos_error
+
     obs = np.concatenate(
         [
             # linvel,
@@ -139,6 +148,9 @@ def get_obs(data, last_action, command):
             joint_vel,
             last_action,
             phase,
+            qpos_error_history,
+            qvel_history,
+
         ]
     )
 
