@@ -274,7 +274,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "qpos_error_history": jp.zeros(self._config.history_len * self._njoints),
         "qvel_history": jp.zeros(self._config.history_len * self._njoints),
         "gravity_history": jp.zeros(self._config.history_len * 3),
-        "action_history": jp.zeros(self._config.action_history_len * self._njoints),
+        "action_history": jp.zeros(self._config.noise_config.action_max_delay * self._njoints),
     }
 
     metrics = {}
@@ -292,13 +292,14 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
 
-    action_history = jp.roll(state.info["action_history"], self._njoints).at[:self._njoints].set(action)
-    state.info["action_history"] = action_history
 
     state.info["rng"], push1_rng, push2_rng, action_delay_rng = jax.random.split(
         state.info["rng"], 4
     )
 
+    # Handle action delay
+    action_history = jp.roll(state.info["action_history"], self._njoints).at[:self._njoints].set(action)
+    state.info["action_history"] = action_history
     action_idx = jax.random.randint(
         action_delay_rng,
         (1,),
