@@ -40,7 +40,7 @@ def default_config() -> config_dict.ConfigDict:
       episode_length=1000,
       action_repeat=1,
       action_scale=0.5,
-      history_len=1,
+      history_len=3,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
           level=1.0,  # Set to 0.0 to disable noise.
@@ -259,6 +259,10 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
 
+    # Initialize history buffers.
+    qpos_error_history = jp.zeros(self._config.history_len * 10)
+    qvel_history = jp.zeros(self._config.history_len * 10)
+
     # # Phase, freq=U(1.0, 1.5)
     # rng, key = jax.random.split(rng)
     # gait_freq = jax.random.uniform(key, (1,), minval=1.25, maxval=1.5)
@@ -292,6 +296,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "motor_targets": jp.zeros(self.mjx_model.nu),
         "feet_air_time": jp.zeros(2),
         "last_contact": jp.zeros(2, dtype=bool),
+        "qpos_error_history": qpos_error_history,
+        "qvel_history": qvel_history,
         "swing_peak": jp.zeros(2),
         # Phase related.
         "phase_dt": phase_dt,
@@ -438,6 +444,16 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         * self._config.noise_config.scales.joint_vel
     )
 
+    # Update history.
+    qvel_history = jp.roll(info["qvel_history"], 10).at[:10].set(data.qvel[6:])
+    qpos_error_history = (
+        jp.roll(info["qpos_error_history"], 10)
+        .at[:10]
+        .set(data.qpos[7:] - info["motor_targets"])
+    )
+    info["qvel_history"] = qvel_history
+    info["qpos_error_history"] = qpos_error_history
+
     cos = jp.cos(info["phase"])
     sin = jp.sin(info["phase"])
     phase = jp.concatenate([cos, sin])
@@ -460,6 +476,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         noisy_joint_vel,  # 10
         info["last_act"],  # 10
         phase, # 4
+        qpos_error_history,
+        qvel_history,
     ])
 
     accelerometer = self.get_accelerometer(data)
