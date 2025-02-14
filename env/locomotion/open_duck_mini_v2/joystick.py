@@ -136,14 +136,14 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         hip_indices.append(
             self._mj_model.joint(f"{side}_{joint_name}").qposadr - 7 # -7 is to remove the 7 first corresponding to the floating base
         )
-    print(f"HIP INDICES: {hip_indices}")
+    # print(f"HIP INDICES: {hip_indices}")
     self._hip_indices = jp.array(hip_indices)
 
     # get the indices of the knee joints
     knee_indices = []
     for side in ["left", "right"]:
       knee_indices.append(self._mj_model.joint(f"{side}_knee").qposadr - 7)
-    print(f"KNEE INDICES: {knee_indices}")
+    # print(f"KNEE INDICES: {knee_indices}")
     self._knee_indices = jp.array(knee_indices)
 
     # weights for computing the cost of each joints compared to a reference pose
@@ -449,9 +449,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     info["qvel_history"] = qvel_history
     info["qpos_error_history"] = qpos_error_history
 
-    jax.debug.print(" === qpos error history {}", qpos_error_history)
-    jax.debug.print(" === qvel history {}", qvel_history)
-    print("========================")
+    # jax.debug.print(" === qpos error history {}", qpos_error_history)
+    # jax.debug.print(" === qvel history {}", qvel_history)
+    # jax.debug.print("========================")
 
     cos = jp.cos(info["phase"])
     sin = jp.sin(info["phase"])
@@ -465,9 +465,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         * self._config.noise_config.level
         * self._config.noise_config.scales.linvel
     )
-
-    # print(" ==== qpos error history", qpos_error_history)
-    # print(" ==== qvel history", qpos_error_history)
 
     state = jp.hstack([
         # noisy_linvel,  # 3

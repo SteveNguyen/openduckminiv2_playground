@@ -134,7 +134,8 @@ def get_obs(data, last_action, command, qvel_history, qpos_error_history):
     qvel_history = np.roll(qvel_history, 10)
     qvel_history[:10] = joint_vel
 
-    qpos_error = joint_angles - last_action
+    last_motor_target = init_pos + last_action * action_scale
+    qpos_error = joint_angles - last_motor_target
     qpos_error_history = np.roll(qpos_error_history, 10)
     qpos_error_history[:10] = qpos_error
 
