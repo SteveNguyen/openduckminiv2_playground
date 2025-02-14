@@ -120,7 +120,7 @@ def get_phase():
 
 
 # phases = []
-def get_obs(data, last_action, command):
+def get_obs(data, last_action, command, qvel_history, qpos_error_history):
     # global phases
 
     gyro = get_gyro(data)
@@ -202,7 +202,7 @@ try:
 
             counter += 1
             if counter % decimation == 0:
-                obs = get_obs(data, prev_action, commands)
+                obs = get_obs(data, prev_action, commands, qvel_history, qpos_error_history)
                 saved_obs.append(obs)
                 action = policy.infer(obs)
 

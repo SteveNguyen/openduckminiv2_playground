@@ -160,7 +160,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     # fmt: on
     # self._joint_names=["left_hip_yaw","left_hip_roll","left_hip_pitch","left_knee","left_ankle", "right_hip_yaw","right_hip_roll","right_hip_pitch","right_knee","right_ankle"]
-    self._njoints=10
+    self._njoints = 10
     # self ._joint_range=
     # self._mj_model.joint()
 
@@ -260,8 +260,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
 
     # Initialize history buffers.
-    qpos_error_history = jp.zeros(self._config.history_len * 10)
-    qvel_history = jp.zeros(self._config.history_len * 10)
+    qpos_error_history = jp.zeros(self._config.history_len * self._njoints)
+    qvel_history = jp.zeros(self._config.history_len * self._njoints)
 
     # # Phase, freq=U(1.0, 1.5)
     # rng, key = jax.random.split(rng)
@@ -445,11 +445,11 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     )
 
     # Update history.
-    qvel_history = jp.roll(info["qvel_history"], 10).at[:10].set(data.qvel[6:])
+    qvel_history = jp.roll(info["qvel_history"], self._njoints).at[:self._njoints].set(noisy_joint_vel)
     qpos_error_history = (
-        jp.roll(info["qpos_error_history"], 10)
-        .at[:10]
-        .set(data.qpos[7:] - info["motor_targets"])
+        jp.roll(info["qpos_error_history"], self._njoints)
+        .at[:self._njoints]
+        .set(noisy_joint_angles - info["motor_targets"])
     )
     info["qvel_history"] = qvel_history
     info["qpos_error_history"] = qpos_error_history
@@ -467,8 +467,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         * self._config.noise_config.scales.linvel
     )
 
-    print(" ==== qpos error history", qpos_error_history)
-    print(" ==== qvel history", qpos_error_history)
+    # print(" ==== qpos error history", qpos_error_history)
+    # print(" ==== qvel history", qpos_error_history)
 
     state = jp.hstack([
         # noisy_linvel,  # 3
