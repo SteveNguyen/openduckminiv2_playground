@@ -44,6 +44,8 @@ def default_config() -> config_dict.ConfigDict:
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
           level=1.0,  # Set to 0.0 to disable noise.
+          action_min_delay=0,  # env steps
+          action_max_delay=1,  # env steps
           scales=config_dict.create(
               hip_pos=0.03,  # rad #for each hip joint
               kfe_pos=0.05, # kfe=Knee Pitch
@@ -272,6 +274,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "qpos_error_history": jp.zeros(self._config.history_len * self._njoints),
         "qvel_history": jp.zeros(self._config.history_len * self._njoints),
         "gravity_history": jp.zeros(self._config.history_len * 3),
+        "action_history": jp.zeros(self._config.action_history_len * self._njoints),
     }
 
     metrics = {}
@@ -288,9 +291,22 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
-    state.info["rng"], push1_rng, push2_rng = jax.random.split(
-        state.info["rng"], 3
+
+    action_history = jp.roll(state.info["action_history"], self._njoints).at[:self._njoints].set(action)
+    state.info["action_history"] = action_history
+
+    state.info["rng"], push1_rng, push2_rng, action_delay_rng = jax.random.split(
+        state.info["rng"], 4
     )
+
+    action_idx = jax.random.randint(
+        action_delay_rng,
+        (1,),
+        minval=self._config.noise_config.action_min_delay,
+        maxval=self._config.noise_config.action_max_delay,
+    )
+    action_w_delay = action_history.reshape((-1, self._njoints))[action_idx[0]] # action with delay
+
     push_theta = jax.random.uniform(push1_rng, maxval=2 * jp.pi)
     push_magnitude = jax.random.uniform(
         push2_rng,
@@ -308,7 +324,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     data = state.data.replace(qvel=qvel)
     state = state.replace(data=data)
 
-    motor_targets = self._default_pose + action * self._config.action_scale
+    motor_targets = self._default_pose + action_w_delay * self._config.action_scale
     data = mjx_env.step(
         self.mjx_model, state.data, motor_targets, self.n_substeps
     )
