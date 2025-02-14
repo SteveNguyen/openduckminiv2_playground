@@ -197,7 +197,7 @@ if "network_factory" in ppo_params:
 print(f"PPO PARAMS: {ppo_training_params}")
 # ppo_training_params["num_timesteps"] = 500000000
 
-ckpt_path = epath.Path('/home/antoine/MISC/openduckminiv2_playground/openduckminiv2_playground/ckpts')
+ckpt_path = epath.Path('/home/apirrone/MISC/openduckminiv2_playground/openduckminiv2_playground/ckpts')
 ckpt_path.mkdir(parents=True, exist_ok=True)
 
 def policy_params_fn(current_step, make_policy, params):
