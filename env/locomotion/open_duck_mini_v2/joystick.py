@@ -292,7 +292,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
 
-
     state.info["rng"], push1_rng, push2_rng, action_delay_rng = jax.random.split(
         state.info["rng"], 4
     )
@@ -435,7 +434,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         .set(noisy_joint_angles - info["motor_targets"])
     )
     gravity_hisory = jp.roll(info["gravity_history"], 3).at[:3].set(noisy_gravity)
-
 
     qvel_history = jp.nan_to_num(qvel_history)
     qpos_error_history = jp.nan_to_num(qpos_error_history)
