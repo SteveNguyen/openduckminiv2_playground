@@ -467,8 +467,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         * self._config.noise_config.scales.linvel
     )
 
-    print("qpos error history", qpos_error_history)
-    print("qvel history", qpos_error_history)
+    print(" ==== qpos error history", qpos_error_history)
+    print(" ==== qvel history", qpos_error_history)
 
     state = jp.hstack([
         # noisy_linvel,  # 3
