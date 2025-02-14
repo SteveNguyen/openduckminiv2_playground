@@ -30,7 +30,7 @@ angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 1.0
 action_scale = 0.5
-history_len = 2
+history_len = 0
 
 init_pos = np.array(
     [
