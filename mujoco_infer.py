@@ -13,6 +13,8 @@ parser.add_argument("-o", "--onnx_model_path", type=str, required=True)
 parser.add_argument("-k", action="store_true", default=False)
 args = parser.parse_args()
 
+NUM_DOFS = 10
+
 
 if args.k:
     import pygame
@@ -67,13 +69,14 @@ COMMANDS_RANGE_X = [-0.2, 0.3]
 COMMANDS_RANGE_Y = [-0.2, 0.2]
 COMMANDS_RANGE_THETA = [-0.5, 0.5]
 
-prev_action = np.zeros(10)
+prev_action = np.zeros(NUM_DOFS)
 commands = [0.2, 0.0, 0.0]
 decimation = 10
 data.qpos[3 : 3 + 4] = [1, 0, 0.0, 0]
 
 data.qpos[7:] = init_pos
 data.ctrl[:] = init_pos
+
 
 
 gyro_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "gyro")
@@ -90,8 +93,9 @@ control_dt = model.opt.timestep * decimation
 phase_dt = 2 * np.pi * control_dt * gait_freq
 current_phase = np.array([0, 0])
 
-qpos_error_history = np.zeros(history_len * 10)
-qvel_history = np.zeros(history_len * 10)
+qpos_error_history = np.zeros(history_len * NUM_DOFS)
+qvel_history = np.zeros(history_len * NUM_DOFS)
+gravity_history = np.zeros(history_len * 3)
 
 
 def get_sensor(model, data, name, dimensions):
@@ -121,7 +125,9 @@ def get_phase():
 
 
 # phases = []
-def get_obs(data, last_action, command, qvel_history, qpos_error_history):
+def get_obs(
+    data, last_action, command, qvel_history, qpos_error_history, gravity_history
+):
     # global phases
 
     gyro = get_gyro(data)
@@ -133,13 +139,16 @@ def get_obs(data, last_action, command, qvel_history, qpos_error_history):
     # phases.append(phase)
 
     if history_len > 0:
-        qvel_history = np.roll(qvel_history, 10)
-        qvel_history[:10] = joint_vel
+        qvel_history = np.roll(qvel_history, NUM_DOFS)
+        qvel_history[:NUM_DOFS] = joint_vel
 
         last_motor_target = init_pos + last_action * action_scale
         qpos_error = joint_angles - last_motor_target
-        qpos_error_history = np.roll(qpos_error_history, 10)
-        qpos_error_history[:10] = qpos_error
+        qpos_error_history = np.roll(qpos_error_history, NUM_DOFS)
+        qpos_error_history[:NUM_DOFS] = qpos_error
+
+        gravity_history = np.roll(gravity_history, 3)
+        gravity_history[:3] = gravity
 
     obs = np.concatenate(
         [
@@ -153,6 +162,7 @@ def get_obs(data, last_action, command, qvel_history, qpos_error_history):
             phase,
             qpos_error_history,  # is [] if history_len == 0
             qvel_history,  # is [] if history_len == 0
+            gravity_history,  # is [] if history_len == 0
         ]
     )
 
@@ -206,7 +216,12 @@ try:
             counter += 1
             if counter % decimation == 0:
                 obs = get_obs(
-                    data, prev_action, commands, qvel_history, qpos_error_history
+                    data,
+                    prev_action,
+                    commands,
+                    qvel_history,
+                    qpos_error_history,
+                    gravity_history,
                 )
                 saved_obs.append(obs)
                 action = policy.infer(obs)
