@@ -207,17 +207,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     qvel = jp.zeros(self.mjx_model.nv)
 
-    # # x=+U(-0.5, 0.5), y=+U(-0.5, 0.5), yaw=U(-3.14, 3.14).
-    # rng, key = jax.random.split(rng)
-    # dxy = jax.random.uniform(key, (2,), minval=-0.5, maxval=0.5)
-    # qpos = qpos.at[0:2].set(qpos[0:2] + dxy)
-    # rng, key = jax.random.split(rng)
-    # yaw = jax.random.uniform(key, (1,), minval=-3.14, maxval=3.14)
-    # quat = math.axis_angle_to_quat(jp.array([0, 0, 1]), yaw)
-    # new_quat = math.quat_mul(qpos[3:7], quat)
-    # qpos = qpos.at[3:7].set(new_quat)
-
-
     #init position/orientation in environment
     # x=+U(-0.05, 0.05), y=+U(-0.05, 0.05), yaw=U(-3.14, 3.14).
     rng, key = jax.random.split(rng)
@@ -229,25 +218,12 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     new_quat = math.quat_mul(qpos[3:7], quat)
     qpos = qpos.at[3:7].set(new_quat)
 
-    # # qpos[7:]=*U(0.5, 1.5)
-    # rng, key = jax.random.split(rng)
-    # qpos = qpos.at[7:].set(
-    #     qpos[7:] * jax.random.uniform(key, (16,), minval=0.5, maxval=1.5)
-    # )
-
     #init joint position
     # qpos[7:]=*U(0.0, 0.1)
     rng, key = jax.random.split(rng)
     qpos = qpos.at[7:].set(
         qpos[7:] * jax.random.uniform(key, (self._njoints,), minval=0.5, maxval=1.5)
     )
-
-    # # d(xyzrpy)=U(-0.5, 0.5)
-    # rng, key = jax.random.split(rng)
-    # qvel = qvel.at[0:6].set(
-    #     jax.random.uniform(key, (6,), minval=-0.5, maxval=0.5)
-    # )
-
 
     #init joint vel
     # d(xyzrpy)=U(-0.05, 0.05)
@@ -257,12 +233,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     )
 
     data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
-
-    # # Phase, freq=U(1.0, 1.5)
-    # rng, key = jax.random.split(rng)
-    # gait_freq = jax.random.uniform(key, (1,), minval=1.25, maxval=1.5)
-    # phase_dt = 2 * jp.pi * self.dt * gait_freq
-    # phase = jp.array([0, jp.pi])
 
     # Phase, freq=U(0.5, 2.5)
     rng, key = jax.random.split(rng)
@@ -459,10 +429,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     info["gravity_history"] = gravity_hisory
 
 
-    # jax.debug.print(" === qpos error history {}", qpos_error_history)
-    # jax.debug.print(" === qvel history {}", qvel_history)
-    # jax.debug.print("========================")
-
     cos = jp.cos(info["phase"])
     sin = jp.sin(info["phase"])
     phase = jp.concatenate([cos, sin])
@@ -511,9 +477,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         info["feet_air_time"],  # 2
     ])
 
-    # jax.debug.print("STATE: {}",state)
-    # jax.debug.print("PRIVILEGED_STATE: {}",privileged_state)
-
     return {
         "state": state,
         "privileged_state": privileged_state,
@@ -530,73 +493,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       contact: jax.Array,
   ) -> dict[str, jax.Array]:
     del metrics  # Unused.
-
-    # jax.debug.print('tracking_lin_vel: {}', self._reward_tracking_lin_vel(info["command"], self.get_local_linvel(data)))
-    # jax.debug.print('tracking_ang_vel: {}', self._reward_tracking_ang_vel(info["command"], self.get_gyro(data)))
-    # jax.debug.print('lin_vel_z: {}',self._cost_lin_vel_z(self.get_global_linvel(data)))
-    # jax.debug.print('ang_vel_xy: {}',self._cost_ang_vel_xy(self.get_global_angvel(data)))
-    # jax.debug.print('orientation: {}',self._cost_orientation(self.get_gravity(data)))
-    # jax.debug.print('torques: {}',self._cost_torques(data.actuator_force))
-    # jax.debug.print('action_rate: {}',self._cost_action_rate(
-    #         action, info["last_act"], info["last_last_act"]
-    #     ))
-    # jax.debug.print('feet_slip: {}',self._cost_feet_slip(data, contact, info))
-    # jax.debug.print('feet_clearance: {}',self._cost_feet_clearance(data, info))
-    # jax.debug.print('feet_height: {}',self._cost_feet_height(
-    #         info["swing_peak"], first_contact, info
-    #     ))
-    # jax.debug.print('feet_air_time: {}',self._reward_feet_air_time(
-    #         info["feet_air_time"], first_contact, info["command"]
-    #     ))
-    # jax.debug.print('feet_phase: {}',self._reward_feet_phase(
-    #         data,
-    #         info["phase"],
-    #         self._config.reward_config.max_foot_height,
-    #         info["command"],
-    #     ))
-    # jax.debug.print('alive: {}',self._reward_alive())
-    # jax.debug.print('termination: {}',self._cost_termination(done))
-    # jax.debug.print('stand_still: {}',self._cost_stand_still(info["command"], data.qpos[7:]))
-    # jax.debug.print('joint_deviation_hip: {}',self._cost_joint_deviation_hip(
-    #         data.qpos[7:], info["command"]
-    #     ))
-    # jax.debug.print('joint_deviation_knee: {}',self._cost_joint_deviation_knee(data.qpos[7:]))
-    # jax.debug.print('dof_pos_limits: {}',self._cost_joint_pos_limits(data.qpos[7:]))
-    # jax.debug.print('pose: {}',self._cost_pose(data.qpos[7:]))
-
-
-    # print('tracking_lin_vel: {}', self._reward_tracking_lin_vel(info["command"], self.get_local_linvel(data)))
-    # print('tracking_ang_vel: {}', self._reward_tracking_ang_vel(info["command"], self.get_gyro(data)))
-    # print('lin_vel_z: {}',self._cost_lin_vel_z(self.get_global_linvel(data)))
-    # print('ang_vel_xy: {}',self._cost_ang_vel_xy(self.get_global_angvel(data)))
-    # print('orientation: {}',self._cost_orientation(self.get_gravity(data)))
-    # print('torques: {}',self._cost_torques(data.actuator_force))
-    # print('action_rate: {}',self._cost_action_rate(
-    #         action, info["last_act"], info["last_last_act"]
-    #     ))
-    # print('feet_slip: {}',self._cost_feet_slip(data, contact, info))
-    # print('feet_clearance: {}',self._cost_feet_clearance(data, info))
-    # print('feet_height: {}',self._cost_feet_height(
-    #         info["swing_peak"], first_contact, info
-    #     ))
-    # print('feet_air_time: {}',self._reward_feet_air_time(
-    #         info["feet_air_time"], first_contact, info["command"]
-    #     ))
-    # print('feet_phase: {}',self._reward_feet_phase(
-    #         data,
-    #         info["phase"],
-    #         self._config.reward_config.max_foot_height,
-    #         info["command"],
-    #     ))
-    # print('alive: {}',self._reward_alive())
-    # print('termination: {}',self._cost_termination(done))
-    # print('stand_still: {}',self._cost_stand_still(info["command"], data.qpos[7:]))
-    # print('joint_deviation_hip: {}',self._cost_joint_deviation_hip(
-    #         data.qpos[7:], info["command"]
-    #     ))
-    # print('joint_deviation_knee: {}',self._cost_joint_deviation_knee(data.qpos[7:]))
-    # print('dof_pos_limits: {}',self._cost_joint_pos_limits(data.qpos[7:]))
-    # print('pose: {}',self._cost_pose(data.qpos[7:]))
 
     ret =  {
         # Tracking rewards.
@@ -644,10 +540,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:]),
         "pose": self._cost_pose(data.qpos[7:]),
     }
-    # print("==")
-    # for key, value in ret.items():
-    #   print(key, value.val())
-    # print("==")
+
     return ret
 
   # Tracking rewards.
@@ -826,7 +719,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     # With 10% chance, set everything to zero.
     return jp.where(
-        jax.random.bernoulli(rng4, p=0.0), # changed to 0% chance to debug
+        jax.random.bernoulli(rng4, p=0.0), # changed to 0% chance to debug TODO add back when adding stand still reward
         jp.zeros(3),
         jp.hstack([lin_vel_x, lin_vel_y, ang_vel_yaw]),
     )
