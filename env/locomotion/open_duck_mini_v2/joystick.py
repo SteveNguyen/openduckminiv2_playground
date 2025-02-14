@@ -58,7 +58,7 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=1.5,
+              tracking_lin_vel=2.0,
               tracking_ang_vel=1.0,
               # Base related rewards.
               lin_vel_z=0.0,
