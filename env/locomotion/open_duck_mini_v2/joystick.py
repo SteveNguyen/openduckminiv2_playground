@@ -450,7 +450,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     info["qpos_error_history"] = qpos_error_history
 
     jax.debug.print(" === qpos error history {}", qpos_error_history)
-    jax.debug.print(" === qvel history {}", qpos_error_history)
+    jax.debug.print(" === qvel history {}", qvel_history)
     print("========================")
 
     cos = jp.cos(info["phase"])
