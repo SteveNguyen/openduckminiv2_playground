@@ -93,6 +93,7 @@ current_phase = np.array([0, 0])
 qpos_error_history = np.zeros(history_len * 10)
 qvel_history = np.zeros(history_len * 10)
 
+
 def get_sensor(model, data, name, dimensions):
     i = model.sensor_name2id(name)
     return data.sensordata[i : i + dimensions]
@@ -131,13 +132,14 @@ def get_obs(data, last_action, command, qvel_history, qpos_error_history):
     phase = get_phase()
     # phases.append(phase)
 
-    qvel_history = np.roll(qvel_history, 10)
-    qvel_history[:10] = joint_vel
+    if history_len > 0:
+        qvel_history = np.roll(qvel_history, 10)
+        qvel_history[:10] = joint_vel
 
-    last_motor_target = init_pos + last_action * action_scale
-    qpos_error = joint_angles - last_motor_target
-    qpos_error_history = np.roll(qpos_error_history, 10)
-    qpos_error_history[:10] = qpos_error
+        last_motor_target = init_pos + last_action * action_scale
+        qpos_error = joint_angles - last_motor_target
+        qpos_error_history = np.roll(qpos_error_history, 10)
+        qpos_error_history[:10] = qpos_error
 
     obs = np.concatenate(
         [
@@ -149,9 +151,8 @@ def get_obs(data, last_action, command, qvel_history, qpos_error_history):
             joint_vel,
             last_action,
             phase,
-            qpos_error_history,
-            qvel_history,
-
+            qpos_error_history,  # is [] if history_len == 0
+            qvel_history,  # is [] if history_len == 0
         ]
     )
 
@@ -187,6 +188,7 @@ def handle_keyboard():
 
     pygame.event.pump()  # process event queue
 
+
 saved_obs = []
 
 try:
@@ -203,7 +205,9 @@ try:
 
             counter += 1
             if counter % decimation == 0:
-                obs = get_obs(data, prev_action, commands, qvel_history, qpos_error_history)
+                obs = get_obs(
+                    data, prev_action, commands, qvel_history, qpos_error_history
+                )
                 saved_obs.append(obs)
                 action = policy.infer(obs)
 

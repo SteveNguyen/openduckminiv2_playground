@@ -446,6 +446,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         .at[:self._njoints]
         .set(noisy_joint_angles - info["motor_targets"])
     )
+
+    qvel_history = jp.nan_to_num(qvel_history)
+    qpos_error_history = jp.nan_to_num(qpos_error_history)
     info["qvel_history"] = qvel_history
     info["qpos_error_history"] = qpos_error_history
 
