@@ -256,12 +256,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         jax.random.uniform(key, (6,), minval=-0.5, maxval=0.5)
     )
 
-
     data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
-
-    # Initialize history buffers.
-    qpos_error_history = jp.zeros(self._config.history_len * self._njoints)
-    qvel_history = jp.zeros(self._config.history_len * self._njoints)
 
     # # Phase, freq=U(1.0, 1.5)
     # rng, key = jax.random.split(rng)
@@ -296,8 +291,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "motor_targets": jp.zeros(self.mjx_model.nu),
         "feet_air_time": jp.zeros(2),
         "last_contact": jp.zeros(2, dtype=bool),
-        "qpos_error_history": qpos_error_history,
-        "qvel_history": qvel_history,
         "swing_peak": jp.zeros(2),
         # Phase related.
         "phase_dt": phase_dt,
@@ -306,6 +299,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "push": jp.array([0.0, 0.0]),
         "push_step": 0,
         "push_interval_steps": push_interval_steps,
+        "qpos_error_history": jp.zeros(self._config.history_len * self._njoints),
+        "qvel_history": jp.zeros(self._config.history_len * self._njoints),
     }
 
     metrics = {}
@@ -502,8 +497,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         contact,  # 2
         feet_vel,  # 4*3
         info["feet_air_time"],  # 2
-        qpos_error_history,
-        qvel_history,
     ])
 
     # jax.debug.print("STATE: {}",state)
