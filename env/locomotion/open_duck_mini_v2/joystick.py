@@ -301,6 +301,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "push_interval_steps": push_interval_steps,
         "qpos_error_history": jp.zeros(self._config.history_len * self._njoints),
         "qvel_history": jp.zeros(self._config.history_len * self._njoints),
+        "gravity_history": jp.zeros(self._config.history_len * 3),
     }
 
     metrics = {}
@@ -446,11 +447,17 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         .at[:self._njoints]
         .set(noisy_joint_angles - info["motor_targets"])
     )
+    gravity_hisory = jp.roll(info["gravity_history"], 3).at[:3].set(noisy_gravity)
+
 
     qvel_history = jp.nan_to_num(qvel_history)
     qpos_error_history = jp.nan_to_num(qpos_error_history)
+    gravity_hisory = jp.nan_to_num(gravity_hisory)
+
     info["qvel_history"] = qvel_history
     info["qpos_error_history"] = qpos_error_history
+    info["gravity_history"] = gravity_hisory
+
 
     # jax.debug.print(" === qpos error history {}", qpos_error_history)
     # jax.debug.print(" === qvel history {}", qvel_history)
@@ -480,6 +487,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         phase, # 4
         qpos_error_history,
         qvel_history,
+        gravity_hisory,
     ])
 
     accelerometer = self.get_accelerometer(data)
