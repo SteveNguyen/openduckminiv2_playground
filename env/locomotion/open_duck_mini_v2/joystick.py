@@ -69,7 +69,7 @@ def default_config() -> config_dict.ConfigDict:
               base_height=0.0,
               # Energy related rewards.
               torques=-2.5e-5,
-              action_rate=-0.1, # Was -0.01
+              action_rate=-0.05, # Was -0.01
               energy=-2.5e-5,
               # Feet related rewards.
               feet_clearance=0.0,
@@ -698,6 +698,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     reward *= cmd_norm > 0.01  # No reward for zero commands.
     return jp.nan_to_num(reward)
 
+  # TODO Understand what is going on there
+  # foot_z should be dimension 2 [left, right]
+  # but phase is dimension 4 ? 
   def _reward_feet_phase(
       self,
       data: mjx.Data,

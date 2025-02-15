@@ -65,9 +65,9 @@ mujoco.mj_step(model, data)
 
 policy = OnnxInfer(args.onnx_model_path, awd=True)
 
-COMMANDS_RANGE_X = [-0.1, 0.2]
-COMMANDS_RANGE_Y = [-0.1, 0.1]
-COMMANDS_RANGE_THETA = [-0.4, 0.4]
+COMMANDS_RANGE_X = [-0.2, 0.3]
+COMMANDS_RANGE_Y = [-0.2, 0.2]
+COMMANDS_RANGE_THETA = [-0.5, 0.5]
 
 prev_action = np.zeros(NUM_DOFS)
 commands = [0.0, 0.0, 0.0]
@@ -124,7 +124,7 @@ def get_phase():
     return np.concatenate([cos, sin])
 
 
-# phases = []
+phases = []
 def get_obs(
     data, last_action, command, qvel_history, qpos_error_history, gravity_history
 ):
@@ -135,7 +135,7 @@ def get_obs(
     joint_angles = data.qpos[7:]
     joint_vel = data.qvel[6:]
     phase = get_phase()
-    # phases.append(phase)
+    phases.append(phase)
 
     if history_len > 0:
         qvel_history = np.roll(qvel_history, NUM_DOFS)
@@ -237,7 +237,7 @@ try:
             if args.k:
                 handle_keyboard()
 
-            # pickle.dump(phases, open("phases.pkl", "wb"))
+            pickle.dump(phases, open("phases.pkl", "wb"))
 
             time_until_next_step = model.opt.timestep - (time.time() - step_start)
             if time_until_next_step > 0:
