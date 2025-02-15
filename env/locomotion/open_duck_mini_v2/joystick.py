@@ -76,7 +76,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_air_time=2.0,
               feet_slip=-0.25,
               feet_height=0.0,
-              feet_phase=1.5,
+              feet_phase=2.5,
               # Other rewards.
               stand_still=0.0,
               alive=0.0,
@@ -443,10 +443,10 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     info["qpos_error_history"] = qpos_error_history
     info["gravity_history"] = gravity_hisory
 
-
     cos = jp.cos(info["phase"])
-    sin = jp.sin(info["phase"])
-    phase = jp.concatenate([cos, sin])
+    # sin = jp.sin(info["phase"])
+    # phase = jp.concatenate([cos, sin]) # [4]
+    phase = cos
 
     linvel = self.get_local_linvel(data)
     info["rng"], noise_rng = jax.random.split(info["rng"])
@@ -698,9 +698,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     reward *= cmd_norm > 0.01  # No reward for zero commands.
     return jp.nan_to_num(reward)
 
-  # TODO Understand what is going on there
-  # foot_z should be dimension 2 [left, right]
-  # but phase is dimension 4 ? 
   def _reward_feet_phase(
       self,
       data: mjx.Data,
