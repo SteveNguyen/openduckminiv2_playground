@@ -508,6 +508,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         contact,  # 2
         feet_vel,  # 4*3
         info["feet_air_time"],  # 2
+        self.reference_motion[info["imitation_i"]] # 10
     ])
 
     return {
