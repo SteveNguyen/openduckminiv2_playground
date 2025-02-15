@@ -81,7 +81,7 @@ def default_config() -> config_dict.ConfigDict:
               stand_still=0.0,
               alive=0.0,
               termination=-1.0,
-              imitation=1.0,
+              imitation=-1.0,
               # Pose related rewards.
               joint_deviation_knee=-0.1,
               joint_deviation_hip=-0.25,
@@ -638,6 +638,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     return done
 
   def _reward_imitation(self, qpos: jax.Array, reference: jax.Array) -> jax.Array:
+    # TODO don't reward for moving when the command is zero.
     return jp.nan_to_num(jp.sum(jp.square(qpos - reference)))
 
   def _reward_alive(self) -> jax.Array:

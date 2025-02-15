@@ -8,6 +8,8 @@ import numpy as np
 Extracting only the joints positions of a walk cycle from a reference file
 """
 
+# TODO add joint vels and contacts ? 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help="The reference file to process")
 parser.add_argument("--no_head", action="store_true" ,help="remove the head joints from the file")
