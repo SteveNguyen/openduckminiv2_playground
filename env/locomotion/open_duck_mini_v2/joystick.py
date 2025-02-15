@@ -637,8 +637,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     return done
 
   def _reward_imitation(self, qpos: jax.Array, reference: jax.Array) -> jax.Array:
-    pass
-    # return jp.nan_to_num(jp.sum(jp.square(qpos - self._default_pose)))
+    return jp.nan_to_num(jp.sum(jp.square(qpos - reference)))
 
   def _reward_alive(self) -> jax.Array:
     return jp.array(1.0)
