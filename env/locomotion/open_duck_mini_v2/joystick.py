@@ -555,7 +555,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
-        "imitation": self._reward_imitation(data.qpos[7:], self.reference_motion[info["imitation_i"]]),
+        "imitation": self._cost_imitation(data.qpos[7:], self.reference_motion[info["imitation_i"]]),
         "stand_still": self._cost_stand_still(info["command"], data.qpos[7:]),
         # Pose related rewards.
         "joint_deviation_hip": self._cost_joint_deviation_hip(
@@ -637,7 +637,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   def _cost_termination(self, done: jax.Array) -> jax.Array:
     return done
 
-  def _reward_imitation(self, qpos: jax.Array, reference: jax.Array) -> jax.Array:
+  def _cost_imitation(self, qpos: jax.Array, reference: jax.Array) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
     return jp.nan_to_num(jp.sum(jp.square(qpos - reference)))
 
