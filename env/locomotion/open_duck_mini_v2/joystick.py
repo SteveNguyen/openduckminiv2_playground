@@ -124,6 +124,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
 
     self.reference_motion = jp.array(json.load(open("reference_motion/0_processed.json")))
+    period = 0.6599
+    self.nb_frames_in_one_walk_cycle = int((1/self._config.ctrl_dt) * period)
 
     # Note: First joint is freejoint.
     # get the range of the joints
