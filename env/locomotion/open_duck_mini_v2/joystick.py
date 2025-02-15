@@ -76,7 +76,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_air_time=2.0,
               feet_slip=-0.25,
               feet_height=0.0,
-              feet_phase=2.0,
+              feet_phase=1.5,
               # Other rewards.
               stand_still=0.0,
               alive=0.0,
@@ -96,9 +96,9 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.1, 1.0],
       ),
-      lin_vel_x=[-0.1, 0.2],
-      lin_vel_y=[-0.1, 0.1],
-      ang_vel_yaw=[-0.4, 0.4],
+      lin_vel_x=[-0.2, 0.3],
+      lin_vel_y=[-0.2, 0.2],
+      ang_vel_yaw=[-0.5, 0.5],
   )
 
 
