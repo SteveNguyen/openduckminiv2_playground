@@ -245,7 +245,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     rng, key = jax.random.split(rng)
     gait_freq = jax.random.uniform(key, (1,), minval=1.9, maxval=2.1)
     phase_dt = 2 * jp.pi * self.dt * gait_freq
-    phase = jp.array([0])
+    phase = jp.array([0.0])
 
     rng, cmd_rng = jax.random.split(rng)
     cmd = self.sample_command(cmd_rng)
