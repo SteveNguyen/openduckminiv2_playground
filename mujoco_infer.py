@@ -93,7 +93,7 @@ imu_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "imu")
 gait_freq = 2
 control_dt = model.opt.timestep * decimation
 phase_dt = 2 * np.pi * control_dt * gait_freq
-current_phase = np.array([0, 0])
+current_phase = np.array([0])
 
 qpos_error_history = np.zeros(history_len * NUM_DOFS)
 qvel_history = np.zeros(history_len * NUM_DOFS)
@@ -126,7 +126,7 @@ def get_phase():
     return np.concatenate([cos, sin])
 
 
-# phases = []
+phases = []
 def get_obs(
     data, last_action, command, qvel_history, qpos_error_history, gravity_history
 ):
@@ -137,7 +137,7 @@ def get_obs(
     joint_angles = data.qpos[7:]
     joint_vel = data.qvel[6:]
     phase = get_phase()
-    # phases.append(phase)
+    phases.append(phase)
 
     if history_len > 0:
         qvel_history = np.roll(qvel_history, NUM_DOFS)
@@ -246,7 +246,7 @@ try:
             if args.k:
                 handle_keyboard()
 
-            # pickle.dump(phases, open("phases.pkl", "wb"))
+            pickle.dump(phases, open("phases.pkl", "wb"))
 
             time_until_next_step = model.opt.timestep - (time.time() - step_start)
             if time_until_next_step > 0:

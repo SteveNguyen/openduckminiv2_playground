@@ -76,12 +76,12 @@ def default_config() -> config_dict.ConfigDict:
               feet_air_time=2.0,
               feet_slip=-0.25,
               feet_height=0.0,
-              feet_phase=0.0,
+              feet_phase=1.0,
               # Other rewards.
               stand_still=0.0,
               alive=0.0,
               termination=-1.0,
-              imitation=-5.0,
+              imitation=0.0,
               # Pose related rewards.
               joint_deviation_knee=-0.1,
               joint_deviation_hip=-0.25,
@@ -97,9 +97,9 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.1, 1.0],
       ),
-      lin_vel_x=[-0.1, 0.2],
-      lin_vel_y=[-0.1, 0.1],
-      ang_vel_yaw=[-0.4, 0.4],
+      lin_vel_x=[-0.2, 0.3],
+      lin_vel_y=[-0.2, 0.2],
+      ang_vel_yaw=[-0.5, 0.5],
   )
 
 
@@ -245,7 +245,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     rng, key = jax.random.split(rng)
     gait_freq = jax.random.uniform(key, (1,), minval=1.9, maxval=2.1)
     phase_dt = 2 * jp.pi * self.dt * gait_freq
-    phase = jp.array([0, jp.pi])
+    phase = jp.array([0])
 
     rng, cmd_rng = jax.random.split(rng)
     cmd = self.sample_command(cmd_rng)
