@@ -135,7 +135,7 @@ def get_obs(
     joint_angles = data.qpos[7:]
     joint_vel = data.qvel[6:]
     phase = get_phase()
-    phases.append(phase)
+    # phases.append(phase)
 
     if history_len > 0:
         qvel_history = np.roll(qvel_history, NUM_DOFS)
@@ -237,7 +237,7 @@ try:
             if args.k:
                 handle_keyboard()
 
-            pickle.dump(phases, open("phases.pkl", "wb"))
+            # pickle.dump(phases, open("phases.pkl", "wb"))
 
             time_until_next_step = model.opt.timestep - (time.time() - step_start)
             if time_until_next_step > 0:
