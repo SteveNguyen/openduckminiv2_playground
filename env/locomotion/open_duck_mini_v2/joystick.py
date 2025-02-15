@@ -76,7 +76,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_air_time=2.0,
               feet_slip=-0.25,
               feet_height=0.0,
-              feet_phase=2.5,
+              feet_phase=2.0,
               # Other rewards.
               stand_still=0.0,
               alive=0.0,
@@ -88,7 +88,7 @@ def default_config() -> config_dict.ConfigDict:
               pose=-1.0,
           ),
           tracking_sigma=0.005, # was working at 0.01
-          max_foot_height=0.03,  #0.1,
+          max_foot_height=0.04,  #0.1,
           base_height_target=0.15,  #0.5,
       ),
       push_config=config_dict.create(
