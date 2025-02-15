@@ -65,7 +65,7 @@ def default_config() -> config_dict.ConfigDict:
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=-0.15,
-              orientation=-2.0,
+              orientation=-1.0,
               base_height=0.0,
               # Energy related rewards.
               torques=-2.5e-5,
@@ -96,9 +96,12 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.1, 1.0],
       ),
-      lin_vel_x=[-0.2, 0.3],
-      lin_vel_y=[-0.2, 0.2],
-      ang_vel_yaw=[-0.5, 0.5],
+      lin_vel_x=[0, 0.3],
+      lin_vel_y=[0.0, 0.0],
+      ang_vel_yaw=[0.0, 0.0],
+      # lin_vel_x=[-0.2, 0.3],
+      # lin_vel_y=[-0.2, 0.2],
+      # ang_vel_yaw=[-0.5, 0.5],
   )
 
 
