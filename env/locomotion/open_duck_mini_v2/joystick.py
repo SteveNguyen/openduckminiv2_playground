@@ -299,8 +299,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
 
     state.info["imitation_i"] += 1
-    if state.info["imitation_i"] > self.nb_frames_in_one_walk_cycle:
-      state.info["imitation_i"] = 0
+    state.info["imitation_i"] = len(self.reference_motion) % self.nb_frames_in_one_walk_cycle
 
     state.info["rng"], push1_rng, push2_rng, action_delay_rng = jax.random.split(
         state.info["rng"], 4
