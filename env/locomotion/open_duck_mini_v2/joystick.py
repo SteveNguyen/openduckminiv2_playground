@@ -39,7 +39,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=1000,
       action_repeat=1,
-      action_scale=0.35,
+      action_scale=0.5,
       history_len=0,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
@@ -60,8 +60,8 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=2.0,
-              tracking_ang_vel=1.0,
+              tracking_lin_vel=1.0,
+              tracking_ang_vel=0.5,
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=-0.15,
@@ -76,7 +76,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_air_time=2.0,
               feet_slip=-0.25,
               feet_height=0.0,
-              feet_phase=2.5,
+              feet_phase=1.0,
               # Other rewards.
               stand_still=0.0,
               alive=0.0,
@@ -88,13 +88,13 @@ def default_config() -> config_dict.ConfigDict:
               pose=-1.0,
           ),
           tracking_sigma=0.005, # was working at 0.01
-          max_foot_height=0.04,  #0.1,
+          max_foot_height=0.03,  #0.1,
           base_height_target=0.15,  #0.5,
       ),
       push_config=config_dict.create(
           enable=True,
           interval_range=[5.0, 10.0],
-          magnitude_range=[0.1, 1.0],
+          magnitude_range=[0.1, 0.5],
       ),
       lin_vel_x=[-0.2, 0.3],
       lin_vel_y=[-0.2, 0.2],
@@ -271,6 +271,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "push": jp.array([0.0, 0.0]),
         "push_step": 0,
         "push_interval_steps": push_interval_steps,
+        # History related.
         "qpos_error_history": jp.zeros(self._config.history_len * self._njoints),
         "qvel_history": jp.zeros(self._config.history_len * self._njoints),
         "gravity_history": jp.zeros(self._config.history_len * 3),
