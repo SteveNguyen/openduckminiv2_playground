@@ -16,7 +16,7 @@
 """Joystick task for Open Duck Mini V2. (based on Berkeley Humanoid)"""
 
 from typing import Any, Dict, Optional, Union
-
+import json
 import jax
 import jax.numpy as jp
 from ml_collections import config_dict
@@ -76,11 +76,12 @@ def default_config() -> config_dict.ConfigDict:
               feet_air_time=2.0,
               feet_slip=-0.25,
               feet_height=0.0,
-              feet_phase=2.0,
+              feet_phase=0.0,
               # Other rewards.
               stand_still=0.0,
               alive=0.0,
               termination=-1.0,
+              imitation=1.0,
               # Pose related rewards.
               joint_deviation_knee=-0.1,
               joint_deviation_hip=-0.25,
@@ -121,6 +122,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   def _post_init(self) -> None:
     self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
     self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
+
+    self.reference_motion = jp.array(json.load(open("reference_motion/0_processed.json")))
 
     # Note: First joint is freejoint.
     # get the range of the joints
@@ -275,6 +278,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "qvel_history": jp.zeros(self._config.history_len * self._njoints),
         "gravity_history": jp.zeros(self._config.history_len * 3),
         "action_history": jp.zeros(self._config.noise_config.action_max_delay * self._njoints),
+        "imitation_i": 0,
     }
 
     metrics = {}
@@ -291,6 +295,10 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
+
+    state.info["imitation_i"] += 1
+    if state.info["imitation_i"] > self.nb_frames_in_one_walk_cycle:
+      state.info["imitation_i"] = 0
 
     state.info["rng"], push1_rng, push2_rng, action_delay_rng = jax.random.split(
         state.info["rng"], 4
@@ -546,6 +554,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
+        "imitation": self._reward_imitation(data.qpos[7:], self.reference_motion[info["imitation_i"]]),
         "stand_still": self._cost_stand_still(info["command"], data.qpos[7:]),
         # Pose related rewards.
         "joint_deviation_hip": self._cost_joint_deviation_hip(
@@ -626,6 +635,10 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
   def _cost_termination(self, done: jax.Array) -> jax.Array:
     return done
+
+  def _reward_imitation(self, qpos: jax.Array, reference: jax.Array) -> jax.Array:
+    pass
+    # return jp.nan_to_num(jp.sum(jp.square(qpos - self._default_pose)))
 
   def _reward_alive(self) -> jax.Array:
     return jp.array(1.0)

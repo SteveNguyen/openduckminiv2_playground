@@ -7,6 +7,7 @@ import time
 import argparse
 
 from onnx_infer import OnnxInfer
+import json # TMP
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-o", "--onnx_model_path", type=str, required=True)
@@ -15,6 +16,7 @@ args = parser.parse_args()
 
 NUM_DOFS = 10
 
+# reference_motion = json.load(open("reference_motion/0_processed.json"))
 
 if args.k:
     import pygame
@@ -91,7 +93,7 @@ imu_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "imu")
 gait_freq = 2
 control_dt = model.opt.timestep * decimation
 phase_dt = 2 * np.pi * control_dt * gait_freq
-current_phase = np.array([0, 0])
+current_phase = np.array([0])
 
 qpos_error_history = np.zeros(history_len * NUM_DOFS)
 qvel_history = np.zeros(history_len * NUM_DOFS)
@@ -208,14 +210,20 @@ try:
         model, data, show_left_ui=False, show_right_ui=False, key_callback=key_callback
     ) as viewer:
         counter = 0
+        # reference_i = 0
         while True:
-
+            
             step_start = time.time()
 
             mujoco.mj_step(model, data)
 
             counter += 1
+
             if counter % decimation == 0:
+                # reference_i += 1
+                # if reference_i % len(reference_motion) == 0:
+                #     reference_i = 0
+                # reference = reference_motion[reference_i]
                 obs = get_obs(
                     data,
                     prev_action,
@@ -231,6 +239,7 @@ try:
 
                 action = init_pos + action * action_scale
                 data.ctrl = action.copy()
+                # data.ctrl = reference
 
             viewer.sync()
 
