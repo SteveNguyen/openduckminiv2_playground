@@ -121,8 +121,8 @@ def get_phase():
     global current_phase
     phase_tp1 = current_phase + phase_dt
     current_phase = np.fmod(phase_tp1 + np.pi, 2 * np.pi) - np.pi
-    cos = np.cos(current_phase)
-    sin = np.sin(current_phase)
+    cos = np.cos(current_phase)# + np.pi/2)
+    sin = np.sin(current_phase)# - np.pi)
     return np.concatenate([cos, sin])
 
 
