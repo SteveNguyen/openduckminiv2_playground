@@ -75,7 +75,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_clearance=0.0,
               feet_air_time=2.0,
               feet_slip=-0.25,
-              feet_height=0.5,
+              feet_height=0.0,
               feet_phase=2.5,
               # Other rewards.
               stand_still=0.0,
