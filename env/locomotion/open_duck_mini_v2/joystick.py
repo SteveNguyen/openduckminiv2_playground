@@ -650,7 +650,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   def _reward_imitation(self, qpos: jax.Array, reference: jax.Array) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
     error = jp.sum(jp.square(qpos - reference))
-    return jp.nan_to_num(jp.exp(-error / 0.01))
+    return jp.nan_to_num(jp.exp(-error / 0.05))
 
 
   def _reward_alive(self) -> jax.Array:
