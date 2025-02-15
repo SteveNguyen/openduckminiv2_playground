@@ -31,7 +31,7 @@ linearVelocityScale = 1.0
 angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 1.0
-action_scale = 0.35
+action_scale = 0.5
 history_len = 0
 
 init_pos = np.array(
@@ -67,9 +67,9 @@ mujoco.mj_step(model, data)
 
 policy = OnnxInfer(args.onnx_model_path, awd=True)
 
-COMMANDS_RANGE_X = [-0.1, 0.2]
-COMMANDS_RANGE_Y = [-0.1, 0.1]
-COMMANDS_RANGE_THETA = [-0.4, 0.4]
+COMMANDS_RANGE_X = [-0.2, 0.3]
+COMMANDS_RANGE_Y = [-0.2, 0.2]
+COMMANDS_RANGE_THETA = [-0.5, 0.5]
 
 prev_action = np.zeros(NUM_DOFS)
 commands = [0.0, 0.0, 0.0]
@@ -90,10 +90,11 @@ linvel_dimensions = 3
 
 
 imu_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "imu")
-gait_freq = 2
+period = 0.6599
+gait_freq = 1/period
 control_dt = model.opt.timestep * decimation
 phase_dt = 2 * np.pi * control_dt * gait_freq
-current_phase = np.array([0])
+current_phase = np.array([0, np.pi])
 
 qpos_error_history = np.zeros(history_len * NUM_DOFS)
 qvel_history = np.zeros(history_len * NUM_DOFS)
@@ -121,9 +122,10 @@ def get_phase():
     global current_phase
     phase_tp1 = current_phase + phase_dt
     current_phase = np.fmod(phase_tp1 + np.pi, 2 * np.pi) - np.pi
-    cos = np.cos(current_phase)# + np.pi/2)
-    sin = np.sin(current_phase)# - np.pi)
-    return np.concatenate([cos, sin])
+    cos = np.cos(current_phase)
+    # sin = np.sin(current_phase)
+    return cos
+    # return np.concatenate([cos, sin])
 
 
 phases = []

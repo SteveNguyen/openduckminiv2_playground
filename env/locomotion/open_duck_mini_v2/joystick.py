@@ -32,14 +32,21 @@ from . import open_duck_mini_v2_constants as consts
 from . import base as open_duck_mini_v2_base
 
 
-#TODO
+
+
+# TO TRY : 
+# - reduce action_scale
+# - curriculum training (less push, less noise, less delay, only forward at start etc)
+# https://chatgpt.com/share/67b0df9c-6a68-8011-8f04-a72fae95ba63
+
+
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
       ctrl_dt=0.02,
       sim_dt=0.002,
       episode_length=1000,
       action_repeat=1,
-      action_scale=0.35,
+      action_scale=0.5,
       history_len=0,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
@@ -60,8 +67,8 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=2.0,
-              tracking_ang_vel=1.0,
+              tracking_lin_vel=2.5,
+              tracking_ang_vel=1.5,
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=-0.15,
@@ -76,12 +83,12 @@ def default_config() -> config_dict.ConfigDict:
               feet_air_time=2.0,
               feet_slip=-0.25,
               feet_height=0.0,
-              feet_phase=1.0,
+              feet_phase=0.0,
               # Other rewards.
               stand_still=0.0,
               alive=0.0,
               termination=-1.0,
-              imitation=0.0,
+              imitation=5.0,
               # Pose related rewards.
               joint_deviation_knee=-0.1,
               joint_deviation_hip=-0.25,
@@ -89,7 +96,7 @@ def default_config() -> config_dict.ConfigDict:
               pose=-1.0,
           ),
           tracking_sigma=0.005, # was working at 0.01
-          max_foot_height=0.04,  #0.1,
+          max_foot_height=0.03,  #0.1,
           base_height_target=0.15,  #0.5,
       ),
       push_config=config_dict.create(
@@ -124,8 +131,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
 
     self.reference_motion = jp.array(json.load(open("reference_motion/0_processed.json")))
-    period = 0.6599
-    self.nb_frames_in_one_walk_cycle = int((1/self._config.ctrl_dt) * period)
+    self.period = 0.6599
+    self.nb_frames_in_one_walk_cycle = int((1/self._config.ctrl_dt) * self.period)
 
     # Note: First joint is freejoint.
     # get the range of the joints
@@ -242,10 +249,11 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
 
     # Phase, freq=U(0.5, 2.5)
-    rng, key = jax.random.split(rng)
-    gait_freq = jax.random.uniform(key, (1,), minval=1.9, maxval=2.1)
+    # rng, key = jax.random.split(rng)
+    # gait_freq = jax.random.uniform(key, (1,), minval=1.9, maxval=2.1)
+    gait_freq = 1 / self.period
     phase_dt = 2 * jp.pi * self.dt * gait_freq
-    phase = jp.array([0.0])
+    phase = jp.array([0, jp.pi])
 
     rng, cmd_rng = jax.random.split(rng)
     cmd = self.sample_command(cmd_rng)
@@ -276,6 +284,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "push": jp.array([0.0, 0.0]),
         "push_step": 0,
         "push_interval_steps": push_interval_steps,
+        # History related.
         "qpos_error_history": jp.zeros(self._config.history_len * self._njoints),
         "qvel_history": jp.zeros(self._config.history_len * self._njoints),
         "gravity_history": jp.zeros(self._config.history_len * 3),
@@ -452,10 +461,10 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     info["qpos_error_history"] = qpos_error_history
     info["gravity_history"] = gravity_hisory
 
-
     cos = jp.cos(info["phase"])
-    sin = jp.sin(info["phase"])
-    phase = jp.concatenate([cos, sin])
+    # sin = jp.sin(info["phase"])
+    # phase = jp.concatenate([cos, sin]) # [4]
+    phase = cos
 
     linvel = self.get_local_linvel(data)
     info["rng"], noise_rng = jax.random.split(info["rng"])
@@ -555,7 +564,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
-        "imitation": self._cost_imitation(data.qpos[7:], self.reference_motion[info["imitation_i"]]),
+        "imitation": self._reward_imitation(data.qpos[7:], self.reference_motion[info["imitation_i"]]),
         "stand_still": self._cost_stand_still(info["command"], data.qpos[7:]),
         # Pose related rewards.
         "joint_deviation_hip": self._cost_joint_deviation_hip(
@@ -637,9 +646,11 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   def _cost_termination(self, done: jax.Array) -> jax.Array:
     return done
 
-  def _cost_imitation(self, qpos: jax.Array, reference: jax.Array) -> jax.Array:
+  def _reward_imitation(self, qpos: jax.Array, reference: jax.Array) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
-    return jp.nan_to_num(jp.sum(jp.square(qpos - reference)))
+    error = jp.sum(jp.square(qpos - reference))
+    return jp.nan_to_num(jp.exp(-error / 0.1))
+
 
   def _reward_alive(self) -> jax.Array:
     return jp.array(1.0)
