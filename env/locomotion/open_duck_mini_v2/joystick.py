@@ -687,12 +687,16 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     error_pos = jp.sum(jp.square(qpos - reference_pos))
     error_vel = jp.sum(jp.square(qvel - reference_vel))
 
+    pos_w = 0.1
+    vel_w = 0.1
+    feet_w = 0.8
+
     feet_pos = data.site_xpos[self._feet_site_id] 
     feet_z = feet_pos[..., -1]  # [left, right]
     reference_feet_z = jp.array([reference_left_toe_z, reference_right_toe_z])
     error_feet = jp.sum(jp.square(feet_z - reference_feet_z))
 
-    error = error_pos + error_vel + error_feet
+    error = pos_w * error_pos + vel_w * error_vel + feet_w * error_feet
     return jp.nan_to_num(jp.exp(-error / 0.5))
 
 
