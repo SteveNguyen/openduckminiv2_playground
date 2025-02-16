@@ -84,7 +84,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_slip=-0.25,
               feet_height=-0.5,
               feet_phase=1.0,
-              both_feet_up=-2.0,
+              both_feet_up=-20.0,
               # Other rewards.
               stand_still=0.0,
               alive=0.0,
