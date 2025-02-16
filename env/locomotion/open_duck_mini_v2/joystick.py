@@ -499,10 +499,11 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         noisy_joint_angles - self._default_pose,  # 10
         noisy_joint_vel,  # 10
         info["last_act"],  # 10
-        phase, # 4
+        # phase, # 4
         qpos_error_history,
         qvel_history,
         gravity_hisory,
+        info["imitation_i"],
     ])
 
     accelerometer = self.get_accelerometer(data)
@@ -528,6 +529,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         self.reference_vel[info["imitation_i"]],  # 10
         self.reference_left_toe_z[info["imitation_i"]],  # 1
         self.reference_right_toe_z[info["imitation_i"]],  # 1
+        info["imitation_i"],
     ])
 
     return {
