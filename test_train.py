@@ -11,7 +11,6 @@ import functools
 import matplotlib.pyplot as plt
 
 
-
 from datetime import datetime
 import os
 from brax.training.agents.ppo import networks as ppo_networks
@@ -26,8 +25,9 @@ from mujoco_playground import wrapper
 from mujoco_playground.config import locomotion_params
 
 from jax import config as jaxconfig
+from tensorboardX import SummaryWriter
 
-#ON CPU?
+# ON CPU?
 # jax.config.update('jax_default_device', jax.devices('cpu')[0])
 
 
@@ -35,63 +35,64 @@ from jax import config as jaxconfig
 jax.config.update("jax_compilation_cache_dir", "/tmp/jax_cache")
 jax.config.update("jax_persistent_cache_min_entry_size_bytes", -1)
 jax.config.update("jax_persistent_cache_min_compile_time_secs", 0)
-jax.config.update("jax_persistent_cache_enable_xla_caches", "xla_gpu_per_fusion_autotune_cache_dir")
-
+jax.config.update(
+    "jax_persistent_cache_enable_xla_caches", "xla_gpu_per_fusion_autotune_cache_dir"
+)
 
 
 #####
 import os
 import subprocess
 
-if subprocess.run('nvidia-smi').returncode:
-  raise RuntimeError(
-      'Cannot communicate with GPU. '
-      'Make sure you are using a GPU Colab runtime. '
-      'Go to the Runtime menu and select Choose runtime type.'
-  )
+if subprocess.run("nvidia-smi").returncode:
+    raise RuntimeError(
+        "Cannot communicate with GPU. "
+        "Make sure you are using a GPU Colab runtime. "
+        "Go to the Runtime menu and select Choose runtime type."
+    )
 
 # Add an ICD config so that glvnd can pick up the Nvidia EGL driver.
 # This is usually installed as part of an Nvidia driver package, but the Colab
 # kernel doesn't install its driver via APT, and as a result the ICD is missing.
 # (https://github.com/NVIDIA/libglvnd/blob/master/src/EGL/icd_enumeration.md)
-NVIDIA_ICD_CONFIG_PATH = '/usr/share/glvnd/egl_vendor.d/10_nvidia.json'
+NVIDIA_ICD_CONFIG_PATH = "/usr/share/glvnd/egl_vendor.d/10_nvidia.json"
 if not os.path.exists(NVIDIA_ICD_CONFIG_PATH):
-  with open(NVIDIA_ICD_CONFIG_PATH, 'w') as f:
-    f.write("""{
+    with open(NVIDIA_ICD_CONFIG_PATH, "w") as f:
+        f.write(
+            """{
     "file_format_version" : "1.0.0",
     "ICD" : {
         "library_path" : "libEGL_nvidia.so.0"
     }
 }
-""")
+"""
+        )
 
 # Configure MuJoCo to use the EGL rendering backend (requires GPU)
-print('Setting environment variable to use GPU rendering:')
+print("Setting environment variable to use GPU rendering:")
 # get_ipython().run_line_magic('env', 'MUJOCO_GL=egl')
-os.environ['MUJOCO_GL']='egl'
+os.environ["MUJOCO_GL"] = "egl"
 # Tell XLA to use Triton GEMM, this improves steps/sec by ~30% on some GPUs
-xla_flags = os.environ.get('XLA_FLAGS', '')
-xla_flags += ' --xla_gpu_triton_gemm_any=True'
-os.environ['XLA_FLAGS'] = xla_flags
+xla_flags = os.environ.get("XLA_FLAGS", "")
+xla_flags += " --xla_gpu_triton_gemm_any=True"
+os.environ["XLA_FLAGS"] = xla_flags
 os.environ["JAX_COMPILATION_CACHE_DIR"] = "/tmp/jax_cache"
 
 
-
-
-
-
-
-locomotion.register_environment('OpenDuckMiniV2JoystickFlatTerrain', functools.partial(open_duck_mini_v2_joystick.Joystick, task="flat_terrain"), open_duck_mini_v2_joystick.default_config)
-#Hack to add a new env... I would have prefered not to come to this...
-setattr(locomotion, 'ALL',list(locomotion._envs.keys()))
-locomotion._randomizer["OpenDuckMiniV2JoystickFlatTerrain"]=open_duck_mini_v2_randomize.domain_randomize
-env_name = 'OpenDuckMiniV2JoystickFlatTerrain'
-
-
+locomotion.register_environment(
+    "OpenDuckMiniV2JoystickFlatTerrain",
+    functools.partial(open_duck_mini_v2_joystick.Joystick, task="flat_terrain"),
+    open_duck_mini_v2_joystick.default_config,
+)
+# Hack to add a new env... I would have prefered not to come to this...
+setattr(locomotion, "ALL", list(locomotion._envs.keys()))
+locomotion._randomizer["OpenDuckMiniV2JoystickFlatTerrain"] = (
+    open_duck_mini_v2_randomize.domain_randomize
+)
+env_name = "OpenDuckMiniV2JoystickFlatTerrain"
 
 
 # env_name = 'BerkeleyHumanoidJoystickFlatTerrain'
-
 
 
 env = registry.load(env_name)
@@ -99,16 +100,16 @@ obs_size = int(env.observation_size["state"][0])
 action_size = int(env.action_size)
 env_cfg = registry.get_default_config(env_name)
 # ppo_params = locomotion_params.brax_ppo_config(env_name)
-ppo_params = locomotion_params.brax_ppo_config('BerkeleyHumanoidJoystickFlatTerrain') #TODO
+ppo_params = locomotion_params.brax_ppo_config(
+    "BerkeleyHumanoidJoystickFlatTerrain"
+)  # TODO
 
 print("ENVIRONEMENT LOADED")
 
 
-
-
 ############################
 
-#To test just some step of the env
+# To test just some step of the env
 
 # define the jit reset/step functions
 # jit_reset = jax.jit(env.reset)
@@ -128,32 +129,27 @@ print("ENVIRONEMENT LOADED")
 ###########################
 
 
-
-
-
-
-
 x_data, y_data, y_dataerr = [], [], []
 times = [datetime.now()]
+
+ckpt_path = epath.Path(
+    "/home/apirrone/MISC/openduckminiv2_playground/openduckminiv2_playground/ckpts"
+)
+ckpt_path.mkdir(parents=True, exist_ok=True)
+writer = SummaryWriter(log_dir=ckpt_path)
 
 
 def progress(num_steps, metrics):
 
-  # clear_output(wait=True)
-  times.append(datetime.now())
-  x_data.append(num_steps)
-  y_data.append(metrics["eval/episode_reward"])
-  y_dataerr.append(metrics["eval/episode_reward_std"])
+    for metric_name, metric_value in metrics.items():
+        # Convert to float, but watch out for 0-dim JAX arrays
+        writer.add_scalar(metric_name, metric_value, num_steps)
 
-  # plt.xlim([0, ppo_params["num_timesteps"] * 1.25])
-  # plt.xlabel("# environment steps")
-  # plt.ylabel("reward per episode")
-  # plt.title(f"y={y_data[-1]:.3f}")
-  # plt.errorbar(x_data, y_data, yerr=y_dataerr, color="blue")
-
-  # # display(plt.gcf())
-  # plt.draw()
-  print(f'STEP: {num_steps} reward: {metrics["eval/episode_reward"]} reward_std: {metrics["eval/episode_reward_std"]}')
+    print("-----------")
+    print(
+        f'STEP: {num_steps} reward: {metrics["eval/episode_reward"]} reward_std: {metrics["eval/episode_reward_std"]}'
+    )
+    print("-----------")
 
 
 randomizer = registry.get_domain_randomizer(env_name)
@@ -161,48 +157,44 @@ ppo_training_params = dict(ppo_params)
 # ppo_training_params["num_envs"] = 64
 network_factory = ppo_networks.make_ppo_networks
 if "network_factory" in ppo_params:
-  del ppo_training_params["network_factory"]
-  network_factory = functools.partial(
-      ppo_networks.make_ppo_networks,
-      **ppo_params.network_factory
-  )
+    del ppo_training_params["network_factory"]
+    network_factory = functools.partial(
+        ppo_networks.make_ppo_networks, **ppo_params.network_factory
+    )
 print(f"PPO PARAMS: {ppo_training_params}")
 # ppo_training_params["num_timesteps"] = 500000000
 
-ckpt_path = epath.Path('/home/apirrone/MISC/openduckminiv2_playground/openduckminiv2_playground/ckpts')
-ckpt_path.mkdir(parents=True, exist_ok=True)
 
 def policy_params_fn(current_step, make_policy, params):
-  # save checkpoints
+    # save checkpoints
 
-  orbax_checkpointer = ocp.PyTreeCheckpointer()
-  save_args = orbax_utils.save_args_from_target(params)
-  d=datetime.now().strftime("%Y_%m_%d_%H%M%S")
-  path = ckpt_path / f'{d}_{current_step}'
-  print(f'Saving checkpoint (step: {current_step}): {path}')
-  orbax_checkpointer.save(path, params, force=True, save_args=save_args)
-  export_onnx(params, action_size, ppo_params, obs_size)
+    orbax_checkpointer = ocp.PyTreeCheckpointer()
+    save_args = orbax_utils.save_args_from_target(params)
+    d = datetime.now().strftime("%Y_%m_%d_%H%M%S")
+    path = ckpt_path / f"{d}_{current_step}"
+    print(f"Saving checkpoint (step: {current_step}): {path}")
+    orbax_checkpointer.save(path, params, force=True, save_args=save_args)
+    export_onnx(params, action_size, ppo_params, obs_size)
 
 
 print("NETWORK CREATED")
 
 print("TRAINING")
 train_fn = functools.partial(
-  ppo.train, **dict(ppo_training_params),
-  network_factory=network_factory,
-  randomization_fn=randomizer,
-  progress_fn=progress,
-  policy_params_fn=policy_params_fn,
-  # save_checkpoint_path='checkpoints', #avaible on the github version...
+    ppo.train,
+    **dict(ppo_training_params),
+    network_factory=network_factory,
+    randomization_fn=randomizer,
+    progress_fn=progress,
+    policy_params_fn=policy_params_fn,
+    # save_checkpoint_path='checkpoints', #avaible on the github version...
 )
 
 
-
 make_inference_fn, params, metrics = train_fn(
-  environment=env,
-  eval_env=registry.load(env_name, config=env_cfg),
-  wrap_env_fn=wrapper.wrap_for_brax_training,
-
+    environment=env,
+    eval_env=registry.load(env_name, config=env_cfg),
+    wrap_env_fn=wrapper.wrap_for_brax_training,
 )
 print("TRAINED")
 print(f"time to jit: {times[1] - times[0]}")
@@ -213,4 +205,4 @@ plt.xlabel("# environment steps")
 plt.ylabel("reward per episode")
 plt.title(f"y={y_data[-1]:.3f}")
 plt.errorbar(x_data, y_data, yerr=y_dataerr, color="blue")
-plt.savefig('training.pdf')
+plt.savefig("training.pdf")
