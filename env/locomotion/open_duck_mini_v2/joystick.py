@@ -133,6 +133,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     reference_motion = json.load(open("reference_motion/0_processed.json"))
     self.reference_pos = jp.array(reference_motion["joints_pos"])
     self.reference_vel = jp.array(reference_motion["joints_vel"])
+    self.reference_left_toe_z = jp.array(reference_motion["left_toe_z"])
+    self.reference_right_toe_z = jp.array(reference_motion["right_toe_z"])
     self.period = 0.6599
     self.nb_frames_in_one_walk_cycle = int((1/self._config.ctrl_dt) * self.period)
 
@@ -511,7 +513,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         feet_vel,  # 4*3
         info["feet_air_time"],  # 2
         self.reference_pos[info["imitation_i"]],  # 10
-        self.reference_vel[info["imitation_i"]]  # 10
+        self.reference_vel[info["imitation_i"]],  # 10
+        self.reference_left_toe_z[info["imitation_i"]],  # 1
+        self.reference_right_toe_z[info["imitation_i"]],  # 1
     ])
 
     return {
@@ -568,7 +572,15 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
-        "imitation": self._reward_imitation(data.qpos[7:], data.qvel[6:], self.reference_pos[info["imitation_i"]], self.reference_vel[info["imitation_i"]]),
+        "imitation": self._reward_imitation(
+          data,
+          data.qpos[7:],
+          data.qvel[6:],
+          self.reference_pos[info["imitation_i"]],
+          self.reference_vel[info["imitation_i"]],
+          self.reference_left_toe_z[info["imitation_i"]],
+          self.reference_right_toe_z[info["imitation_i"]]
+          ),
         "stand_still": self._cost_stand_still(info["command"], data.qpos[7:]),
         # Pose related rewards.
         "joint_deviation_hip": self._cost_joint_deviation_hip(
@@ -650,11 +662,25 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   def _cost_termination(self, done: jax.Array) -> jax.Array:
     return done
 
-  def _reward_imitation(self, qpos: jax.Array, qvel: jax.Array, reference_pos: jax.Array, reference_vel: jax.Array) -> jax.Array:
+  def _reward_imitation(self,
+    data: mjx.Data,
+    qpos: jax.Array,
+    qvel: jax.Array,
+    reference_pos: jax.Array,
+    reference_vel: jax.Array,
+    reference_left_toe_z: jax.Array,
+    reference_right_toe_z: jax.Array
+    ) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
     error_pos = jp.sum(jp.square(qpos - reference_pos))
     error_vel = jp.sum(jp.square(qvel - reference_vel))
-    error = error_pos + error_vel
+
+    feet_pos = data.site_xpos[self._feet_site_id] 
+    feet_z = feet_pos[..., -1]  # [left, right]
+    reference_feet_z = jp.array([reference_left_toe_z, reference_right_toe_z])
+    error_feet = jp.sum(jp.square(feet_z - reference_feet_z))
+
+    error = error_pos + error_vel + error_feet
     return jp.nan_to_num(jp.exp(-error / 0.05))
 
 
