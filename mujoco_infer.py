@@ -7,7 +7,7 @@ import time
 import argparse
 
 from onnx_infer import OnnxInfer
-import json # TMP
+import json  # TMP
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-o", "--onnx_model_path", type=str, required=True)
@@ -80,7 +80,6 @@ data.qpos[7:] = init_pos
 data.ctrl[:] = init_pos
 
 
-
 gyro_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "gyro")
 gyro_dimensions = 3
 linvel_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "local_linvel")
@@ -91,7 +90,7 @@ linvel_dimensions = 3
 
 imu_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "imu")
 period = 0.6599
-gait_freq = 1/period
+gait_freq = 1 / period
 control_dt = model.opt.timestep * decimation
 phase_dt = 2 * np.pi * control_dt * gait_freq
 current_phase = np.array([0, np.pi])
@@ -99,6 +98,9 @@ current_phase = np.array([0, np.pi])
 qpos_error_history = np.zeros(history_len * NUM_DOFS)
 qvel_history = np.zeros(history_len * NUM_DOFS)
 gravity_history = np.zeros(history_len * 3)
+
+imitation_i = 0
+num_steps_per_walk_cycle = int((1 / control_dt) * period)
 
 
 def get_sensor(model, data, name, dimensions):
@@ -129,6 +131,8 @@ def get_phase():
 
 
 phases = []
+
+
 def get_obs(
     data, last_action, command, qvel_history, qpos_error_history, gravity_history
 ):
@@ -162,10 +166,11 @@ def get_obs(
             joint_angles - init_pos,
             joint_vel,
             last_action,
-            phase,
+            # phase,
             qpos_error_history,  # is [] if history_len == 0
             qvel_history,  # is [] if history_len == 0
             gravity_history,  # is [] if history_len == 0
+            [imitation_i]
         ]
     )
 
@@ -214,12 +219,14 @@ try:
         counter = 0
         # reference_i = 0
         while True:
-            
+
             step_start = time.time()
 
             mujoco.mj_step(model, data)
 
             counter += 1
+            imitation_i += 1
+            imitation_i = imitation_i % num_steps_per_walk_cycle
 
             if counter % decimation == 0:
                 # reference_i += 1

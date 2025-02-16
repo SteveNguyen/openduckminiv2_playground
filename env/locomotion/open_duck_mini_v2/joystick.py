@@ -73,7 +73,7 @@ def default_config() -> config_dict.ConfigDict:
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=-0.15,
-              orientation=-2.0,
+              orientation=-1.0,
               base_height=0.0,
               # Energy related rewards.
               torques=-2.5e-5,
