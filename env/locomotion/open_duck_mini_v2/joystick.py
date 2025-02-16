@@ -72,7 +72,7 @@ def default_config() -> config_dict.ConfigDict:
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=-0.15,
-              orientation=-2.0,
+              orientation=-1.5,
               base_height=0.0,
               # Energy related rewards.
               torques=-2.5e-5,
@@ -245,7 +245,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     # Phase, freq=U(0.5, 2.5)
     rng, key = jax.random.split(rng)
-    gait_freq = jax.random.uniform(key, (1,), minval=1.9, maxval=2.1)
+    gait_freq = jax.random.uniform(key, (1,), minval=2.4, maxval=2.6)
     phase_dt = 2 * jp.pi * self.dt * gait_freq
     phase = jp.array([0, jp.pi])
 
@@ -473,7 +473,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         noisy_joint_angles - self._default_pose,  # 10
         noisy_joint_vel,  # 10
         info["last_act"],  # 10
-        phase, # 4
+        phase, # 2
         qpos_error_history,
         qvel_history,
         gravity_hisory,
