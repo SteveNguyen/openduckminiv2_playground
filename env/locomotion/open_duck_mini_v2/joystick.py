@@ -89,7 +89,7 @@ def default_config() -> config_dict.ConfigDict:
               stand_still=0.0,
               alive=0.0,
               termination=-1.0,
-              imitation=10000.0,
+              imitation=10.0,
               # Pose related rewards.
               joint_deviation_knee=-0.1,
               joint_deviation_hip=-0.25,
@@ -693,7 +693,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     error_feet = jp.sum(jp.square(feet_z - reference_feet_z))
 
     error = error_pos + error_vel + error_feet
-    return jp.nan_to_num(jp.exp(-error / 0.05))
+    return jp.nan_to_num(jp.exp(-error / 0.5))
 
 
   def _reward_alive(self) -> jax.Array:
