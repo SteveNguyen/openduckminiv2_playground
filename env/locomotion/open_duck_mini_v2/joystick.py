@@ -84,7 +84,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_slip=-0.25,
               feet_height=-0.5,
               feet_phase=1.0,
-              both_feet_up=0.0, # doesn't seem to bother the policy lol, even with -1000
+              both_feet_up=-200.0, # doesn't seem to bother the policy lol, even with -1000
               # Other rewards.
               stand_still=0.0,
               alive=0.0,
