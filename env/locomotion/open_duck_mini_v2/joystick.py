@@ -130,7 +130,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
     self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
 
-    self.reference_motion = jp.array(json.load(open("reference_motion/0_processed.json")))
+    reference_motion = json.load(open("reference_motion/0_processed.json"))
+    self.reference_pos = jp.array(reference_motion["joints_pos"])
+    self.reference_vel = jp.array(reference_motion["joints_vel"])
     self.period = 0.6599
     self.nb_frames_in_one_walk_cycle = int((1/self._config.ctrl_dt) * self.period)
 
@@ -508,8 +510,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         contact,  # 2
         feet_vel,  # 4*3
         info["feet_air_time"],  # 2
-        self.reference_motion["joints_pos"][info["imitation_i"]],  # 10
-        self.reference_motion["joints_vel"][info["imitation_i"]]  # 10
+        self.reference_pos[info["imitation_i"]],  # 10
+        self.reference_vel[info["imitation_i"]]  # 10
     ])
 
     return {
@@ -566,7 +568,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
-        "imitation": self._reward_imitation(data.qpos[7:], data.qvel[6:], self.reference_motion["joints_pos"][info["imitation_i"]], self.reference_motion["joints_vel"][info["imitation_i"]]),
+        "imitation": self._reward_imitation(data.qpos[7:], data.qvel[6:], self.reference_pos[info["imitation_i"]], self.reference_vel[info["imitation_i"]]),
         "stand_still": self._cost_stand_still(info["command"], data.qpos[7:]),
         # Pose related rewards.
         "joint_deviation_hip": self._cost_joint_deviation_hip(
