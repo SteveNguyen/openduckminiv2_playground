@@ -615,6 +615,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       commands: jax.Array,
       local_vel: jax.Array,
   ) -> jax.Array:
+    # In order to move forward, the robot has to have a swing gait that adds to the y error
+    # Ideally, implement average velocity like in AWD ?
     x_lin_vel_error = jp.sum(jp.square(commands[0] - local_vel[0]))
     y_lin_vel_error = jp.sum(jp.square(commands[1] - local_vel[1]))
     x_w = 0.8
