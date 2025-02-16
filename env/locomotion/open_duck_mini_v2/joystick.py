@@ -34,6 +34,7 @@ from . import base as open_duck_mini_v2_base
 
 
 
+
 # TO TRY : 
 # - reduce action_scale
 # - curriculum training (less push, less noise, less delay, only forward at start etc)
@@ -125,6 +126,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         config_overrides=config_overrides,
     )
     self._post_init()
+
 
   def _post_init(self) -> None:
     self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
