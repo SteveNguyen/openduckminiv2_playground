@@ -299,8 +299,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     }
 
     metrics = {}
-    for k in self._config.reward_config.scales.keys():
-      metrics[f"reward/{k}"] = jp.zeros(())
+    for k, v in self._config.reward_config.scales.items():
+      if v != 0: # Don't add metrics for zero rewards.
+        metrics[f"reward/{k}"] = jp.zeros(())
     metrics["swing_peak"] = jp.zeros(())
 
     contact = jp.array([
