@@ -91,10 +91,10 @@ def default_config() -> config_dict.ConfigDict:
               termination=-1.0,
               imitation=1.0,
               # Pose related rewards.
-              joint_deviation_knee=-0.1,
-              joint_deviation_hip=-0.25,
+              joint_deviation_knee=-0.05,
+              joint_deviation_hip=-0.05,
               dof_pos_limits=-1.0,
-              pose=-1.0,
+              pose=-0.1,
           ),
           tracking_sigma=0.005, # was working at 0.01
           max_foot_height=0.03,  #0.1,
