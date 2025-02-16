@@ -591,7 +591,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
           self.reference_pos[info["imitation_i"]],
           self.reference_vel[info["imitation_i"]],
           self.reference_left_toe_z[info["imitation_i"]],
-          self.reference_right_toe_z[info["imitation_i"]]
+          self.reference_right_toe_z[info["imitation_i"]],
+          self._config.reward_config.max_foot_height
           ),
         "stand_still": self._cost_stand_still(info["command"], data.qpos[7:]),
         # Pose related rewards.
@@ -681,7 +682,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     reference_pos: jax.Array,
     reference_vel: jax.Array,
     reference_left_toe_z: jax.Array,
-    reference_right_toe_z: jax.Array
+    reference_right_toe_z: jax.Array,
+    max_foot_height: float,
     ) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
     error_pos = jp.sum(jp.square(qpos - reference_pos))
@@ -694,7 +696,12 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     feet_pos = data.site_xpos[self._feet_site_id] 
     feet_z = feet_pos[..., -1]  # [left, right]
     reference_feet_z = jp.array([reference_left_toe_z, reference_right_toe_z])
-    error_feet = jp.sum(jp.square(feet_z - reference_feet_z))
+    # error_feet = jp.sum(jp.square(feet_z - reference_feet_z))
+
+    # error_feet should be zero when feet_z is same as reference_feet_z
+    # error_feet should be 1 when feet_z is at max_foot_height different from reference_feet_z
+
+    error_feet = jp.sum(jp.abs(feet_z - reference_feet_z) / max_foot_height)
 
     error = pos_w * error_pos + vel_w * error_vel + feet_w * error_feet
     return jp.nan_to_num(jp.exp(-error / 0.5))
