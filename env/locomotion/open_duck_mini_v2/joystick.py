@@ -76,7 +76,7 @@ def default_config() -> config_dict.ConfigDict:
               base_height=0.0,
               # Energy related rewards.
               torques=-2.5e-5,
-              action_rate=-0.3, # Was -0.01
+              action_rate=-0.01, # Was -0.01
               energy=-2.5e-5,
               # Feet related rewards.
               feet_clearance=0.0,
@@ -587,8 +587,31 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       commands: jax.Array,
       local_vel: jax.Array,
   ) -> jax.Array:
-    lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
+    # lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
+    # return jp.nan_to_num(jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma))
+    y_tol = 0.02
+    error_x = jp.square(commands[0] - local_vel[0])
+    error_y = jp.clip(jp.abs(local_vel[1] - commands[1]) - y_tol, 0.0, None)
+    lin_vel_error = error_x + jp.square(error_y)
     return jp.nan_to_num(jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma))
+
+  # def _reward_tracking_lin_vel(self, commands, local_vel):
+  #     # commands[:2] -> [x_cmd, y_cmd]
+  #     # local_vel[:2] -> [x_vel, y_vel]
+  #     target = commands[:2]
+  #     actual = local_vel[:2]
+
+  #     # Give a tolerance (e.g. ±0.02 m/s) for the y-velocity:
+  #     tol = 0.02
+  #     # Flatten out the error if |y_vel| < 0.02
+  #     error_y = jp.clip(jp.abs(actual[1] - target[1]) - tol, 0.0, None)
+
+  #     # For x-velocity, do a standard squared error
+  #     error_x = jp.square(actual[0] - target[0])
+
+  #     # Combine them
+  #     lin_vel_error = error_x + jp.square(error_y)
+  #     return jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma)
 
   def _reward_tracking_ang_vel(
       self,
