@@ -390,8 +390,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     state.info["last_contact"] = contact
     state.info["swing_peak"] *= ~contact
     for k, v in rewards.items():
-      if v != 0:
-        if v > 0:
+      rew_scale = self._config.reward_config.scales[k]
+      if rew_scale != 0:
+        if rew_scale > 0:
           state.metrics[f"reward/{k}"] = v
         else:
           state.metrics[f"cost/{k}"] = -v
