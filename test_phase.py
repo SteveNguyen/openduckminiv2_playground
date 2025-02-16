@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 
-gait_freq = 2
+gait_freq = 2.5
 control_dt = 0.02
 
 phase_dt = 2 * np.pi * control_dt * gait_freq
