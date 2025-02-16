@@ -88,7 +88,7 @@ def default_config() -> config_dict.ConfigDict:
               stand_still=0.0,
               alive=0.0,
               termination=-1.0,
-              imitation=10.0,
+              imitation=3.0,
               # Pose related rewards.
               joint_deviation_knee=-0.1,
               joint_deviation_hip=-0.25,
@@ -508,7 +508,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         contact,  # 2
         feet_vel,  # 4*3
         info["feet_air_time"],  # 2
-        self.reference_motion[info["imitation_i"]] # 10
+        self.reference_motion["joints_pos"][info["imitation_i"]],  # 10
+        self.reference_motion["joints_vel"][info["imitation_i"]]  # 10
     ])
 
     return {
@@ -565,7 +566,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
-        "imitation": self._reward_imitation(data.qpos[7:], self.reference_motion[info["imitation_i"]]),
+        "imitation": self._reward_imitation(data.qpos[7:], data.qvel[6:], self.reference_motion["joints_pos"][info["imitation_i"]], self.reference_motion["joints_vel"][info["imitation_i"]]),
         "stand_still": self._cost_stand_still(info["command"], data.qpos[7:]),
         # Pose related rewards.
         "joint_deviation_hip": self._cost_joint_deviation_hip(
@@ -647,9 +648,11 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   def _cost_termination(self, done: jax.Array) -> jax.Array:
     return done
 
-  def _reward_imitation(self, qpos: jax.Array, reference: jax.Array) -> jax.Array:
+  def _reward_imitation(self, qpos: jax.Array, qvel: jax.Array, reference_pos: jax.Array, reference_vel: jax.Array) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
-    error = jp.sum(jp.square(qpos - reference))
+    error_pos = jp.sum(jp.square(qpos - reference_pos))
+    error_vel = jp.sum(jp.square(qvel - reference_vel))
+    error = error_pos + error_vel
     return jp.nan_to_num(jp.exp(-error / 0.05))
 
 
