@@ -84,6 +84,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_slip=-0.25,
               feet_height=-0.5,
               feet_phase=1.0,
+              both_feet_up=-2,
               # Other rewards.
               stand_still=0.0,
               alive=0.0,
@@ -551,6 +552,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
             self._config.reward_config.max_foot_height,
             info["command"],
         ),
+        "both_feet_up": self._cost_both_feet_up(contact),
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
@@ -724,6 +726,12 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     # cmd_norm = jp.linalg.norm(commands)
     # reward *= cmd_norm > 0.1  # No reward for zero commands.
     return jp.nan_to_num(reward)
+
+  def _cost_both_feet_up(self, contact: jax.Array) -> jax.Array:
+    # contact [0, 0] if both feet are in the air, [1, 1] if both feet are on the ground
+
+    both_up = jp.all(contact == 0)
+    return jp.nan_to_num(both_up)
 
   def sample_command(self, rng: jax.Array) -> jax.Array:
     rng1, rng2, rng3, rng4 = jax.random.split(rng, 4)
