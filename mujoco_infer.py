@@ -145,6 +145,14 @@ def get_obs(
     phase = get_phase()
     # phases.append(phase)
 
+    _feet_site_id = np.array(
+        [model.site(name).id for name in ["left_foot", "right_foot"]]
+    )
+    feet_pos = data.site_xpos[_feet_site_id] 
+    feet_z = feet_pos[..., -1]  # [left, right]
+    print(feet_z)
+
+
     if history_len > 0:
         qvel_history = np.roll(qvel_history, NUM_DOFS)
         qvel_history[:NUM_DOFS] = joint_vel
@@ -204,7 +212,7 @@ def handle_keyboard():
     commands[1] = lin_vel_y
     commands[2] = ang_vel
 
-    print(commands)
+    # print(commands)
 
     pygame.event.pump()  # process event queue
 

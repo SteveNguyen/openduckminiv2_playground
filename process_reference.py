@@ -58,8 +58,11 @@ for i, frame in enumerate(frames):
     processed_frames["joints_vel"].append(joints_vel)
     processed_frames["left_toe_z"].append(left_toe_z)
     processed_frames["right_toe_z"].append(right_toe_z)
+    # print(left_toe_z, right_toe_z)
+
     if i == nb_frames_in_one_walk_cycle:
         break
 
+# exit()
 with open(processed_file_path, "w") as f:
     json.dump(processed_frames, f)

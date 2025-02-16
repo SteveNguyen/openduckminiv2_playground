@@ -91,10 +91,10 @@ def default_config() -> config_dict.ConfigDict:
               termination=-1.0,
               imitation=1.0,
               # Pose related rewards.
-              joint_deviation_knee=-0.05,
-              joint_deviation_hip=-0.05,
+              joint_deviation_knee=-0.1,
+              joint_deviation_hip=-0.25,
               dof_pos_limits=-1.0,
-              pose=-0.1,
+              pose=-1.0,
           ),
           tracking_sigma=0.005, # was working at 0.01
           max_foot_height=0.03,  #0.1,
@@ -615,7 +615,12 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       commands: jax.Array,
       local_vel: jax.Array,
   ) -> jax.Array:
-    lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
+    x_lin_vel_error = jp.sum(jp.square(commands[0] - local_vel[0]))
+    y_lin_vel_error = jp.sum(jp.square(commands[1] - local_vel[1]))
+    x_w = 0.8
+    y_w = 0.2
+    lin_vel_error = x_w * x_lin_vel_error + y_w * y_lin_vel_error
+    # lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
     return jp.nan_to_num(jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma))
 
   def _reward_tracking_ang_vel(
