@@ -68,8 +68,8 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=2.5,
-              tracking_ang_vel=1.5,
+              tracking_lin_vel=1.5,
+              tracking_ang_vel=1.0,
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=-0.15,
@@ -89,7 +89,7 @@ def default_config() -> config_dict.ConfigDict:
               stand_still=0.0,
               alive=0.0,
               termination=-1.0,
-              imitation=20.0,
+              imitation=10.0,
               # Pose related rewards.
               joint_deviation_knee=-0.1,
               joint_deviation_hip=-0.25,
