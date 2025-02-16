@@ -104,9 +104,12 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.1, 1.0],
       ),
-      lin_vel_x=[-0.2, 0.3],
-      lin_vel_y=[-0.2, 0.2],
-      ang_vel_yaw=[-0.5, 0.5],
+      # lin_vel_x=[-0.2, 0.3],
+      # lin_vel_y=[-0.2, 0.2],
+      # ang_vel_yaw=[-0.5, 0.5],
+      lin_vel_x=[0.0, 0.15],
+      lin_vel_y=[0.0, 0.0],
+      ang_vel_yaw=[0.0, 0.0],
   )
 
 
@@ -287,8 +290,12 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     }
 
     metrics = {}
-    for k in self._config.reward_config.scales.keys():
-      metrics[f"reward/{k}"] = jp.zeros(())
+    for k, v in self._config.reward_config.scales.items():
+      if v != 0:
+        if v > 0:
+          metrics[f"reward/{k}"] = jp.zeros(())
+        else:
+          metrics[f"cost/{k}"] = jp.zeros(())
     metrics["swing_peak"] = jp.zeros(())
 
     contact = jp.array([
@@ -383,7 +390,11 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     state.info["last_contact"] = contact
     state.info["swing_peak"] *= ~contact
     for k, v in rewards.items():
-      state.metrics[f"reward/{k}"] = v
+      if v != 0:
+        if v > 0:
+          state.metrics[f"reward/{k}"] = v
+        else:
+          state.metrics[f"cost/{k}"] = -v
     state.metrics["swing_peak"] = jp.mean(state.info["swing_peak"])
 
     done = done.astype(reward.dtype)
