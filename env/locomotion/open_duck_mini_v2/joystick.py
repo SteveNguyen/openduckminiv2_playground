@@ -46,13 +46,13 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=1000,
       action_repeat=1,
-      action_scale=0.4,
+      action_scale=0.5,
       history_len=0,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
           level=1.0,  # Set to 0.0 to disable noise.
           action_min_delay=0,  # env steps
-          action_max_delay=4,  # env steps
+          action_max_delay=1,  # env steps
           scales=config_dict.create(
               hip_pos=0.03,  # rad #for each hip joint
               kfe_pos=0.05, # kfe=Knee Pitch
@@ -71,20 +71,20 @@ def default_config() -> config_dict.ConfigDict:
               tracking_ang_vel=0.5,
               # Base related rewards.
               lin_vel_z=0.0,
-              ang_vel_xy=0.0, # -0.15
+              ang_vel_xy=-0.15,
               orientation=-1.0,
               base_height=0.0,
               base_y_swing=0.0, # doesn't seem to work at all
               # Energy related rewards.
               torques=-2.5e-5,
               action_rate=-0.01, # Was -0.01
-              energy=-0.001, #  -2.5e-5
+              energy=-2.5e-5,
               # Feet related rewards.
               feet_clearance=0.0,
               feet_air_time=2.0,
               feet_slip=-0.25,
               feet_height=0,
-              feet_phase=1.0, # 1.0
+              feet_phase=1.0,
               both_feet_up=0.0, # doesn't seem to bother the policy lol, even with -1000
               # Other rewards.
               stand_still=0.0,
@@ -105,7 +105,7 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.1, 1.0],
       ),
-      lin_vel_x=[-0.1, 0.1],
+      lin_vel_x=[-0.1, 0.15],
       lin_vel_y=[-0.2, 0.2],
       ang_vel_yaw=[-0.5, 0.5],
       # lin_vel_x=[0.0, 0.1],
@@ -250,7 +250,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     # Phase, freq=U(0.5, 2.5)
     rng, key = jax.random.split(rng)
-    gait_freq = jax.random.uniform(key, (1,), minval=1.4, maxval=1.6)
+    gait_freq = jax.random.uniform(key, (1,), minval=1.9, maxval=2.1)
     phase_dt = 2 * jp.pi * self.dt * gait_freq
     phase = jp.array([0, jp.pi])
 

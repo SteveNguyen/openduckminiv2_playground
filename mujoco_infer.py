@@ -65,7 +65,7 @@ mujoco.mj_step(model, data)
 
 policy = OnnxInfer(args.onnx_model_path, awd=True)
 
-COMMANDS_RANGE_X = [-0.1, 0.1]
+COMMANDS_RANGE_X = [-0.1, 0.15]
 COMMANDS_RANGE_Y = [-0.2, 0.2]
 COMMANDS_RANGE_THETA = [-0.5, 0.5]
 
@@ -91,7 +91,7 @@ linvel_dimensions = 3
 
 
 imu_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "imu")
-gait_freq = 1.5
+gait_freq = 2
 control_dt = model.opt.timestep * decimation
 phase_dt = 2 * np.pi * control_dt * gait_freq
 current_phase = np.array([0, np.pi])
