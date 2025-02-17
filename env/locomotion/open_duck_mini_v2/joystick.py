@@ -78,7 +78,7 @@ def default_config() -> config_dict.ConfigDict:
               # Energy related rewards.
               torques=-2.5e-5,
               action_rate=-0.01, # Was -0.01
-              energy=-0.01, #  -2.5e-5
+              energy=-0.001, #  -2.5e-5
               # Feet related rewards.
               feet_clearance=0.0,
               feet_air_time=2.0,
