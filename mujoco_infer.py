@@ -92,7 +92,7 @@ linvel_dimensions = 3
 
 
 imu_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "imu")
-gait_freq = 2.5
+gait_freq = 2
 control_dt = model.opt.timestep * decimation
 phase_dt = 2 * np.pi * control_dt * gait_freq
 current_phase = np.array([0, np.pi])
