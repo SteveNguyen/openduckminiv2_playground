@@ -74,6 +74,7 @@ def default_config() -> config_dict.ConfigDict:
               ang_vel_xy=0.0, # -0.15
               orientation=-1.0,
               base_height=0.0,
+              base_y_swing=1.0,
               # Energy related rewards.
               torques=-2.5e-5,
               action_rate=-0.1, # Was -0.01
@@ -253,6 +254,10 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     phase_dt = 2 * jp.pi * self.dt * gait_freq
     phase = jp.array([0, jp.pi])
 
+    base_y_swing_freq = 1.5 # hz
+    base_y_swing_amplitude = 0.06 # 6 centimeters
+    base_t = 0
+
     rng, cmd_rng = jax.random.split(rng)
     cmd = self.sample_command(cmd_rng)
 
@@ -275,6 +280,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "feet_air_time": jp.zeros(2),
         "last_contact": jp.zeros(2, dtype=bool),
         "swing_peak": jp.zeros(2),
+        "base_y_swing_freq": base_y_swing_freq,
+        "base_y_swing_amplitude": base_y_swing_amplitude,
+        "base_t": base_t,
         # Phase related.
         "phase_dt": phase_dt,
         "phase": phase,
@@ -339,6 +347,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     qvel = qvel.at[:2].set(push * push_magnitude + qvel[:2])
     data = state.data.replace(qvel=qvel)
     state = state.replace(data=data)
+
+    state.info["base_t"] += self.dt
 
     motor_targets = self._default_pose + action_w_delay * self._config.action_scale
     data = mjx_env.step(
@@ -544,6 +554,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "ang_vel_xy": self._cost_ang_vel_xy(self.get_global_angvel(data)),
         "orientation": self._cost_orientation(self.get_gravity(data)),
         "base_height": self._cost_base_height(data.qpos[2]),
+        "base_y_swing": self._reward_base_y_swing(data.qvel[1], info["base_y_swing_freq"], info["base_y_swing_amplitude"], info["base_t"]),
         # Energy related rewards.
         "torques": self._cost_torques(data.actuator_force),
         "action_rate": self._cost_action_rate(
@@ -637,6 +648,13 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     return jp.nan_to_num(jp.square(
         base_height - self._config.reward_config.base_height_target
     ))
+
+  def _reward_base_y_swing(
+      self, base_y_speed: jax.Array, freq: float, amplitude: float, t: float
+  ) -> jax.Array:
+    target_y_speed = amplitude * jp.sin(2 * jp.pi * freq * t)
+    y_speed_error = jp.square(target_y_speed - base_y_speed)
+    return jp.nan_to_num(jp.exp(-y_speed_error / self._config.reward_config.tracking_sigma))
 
   # Energy related rewards.
 
