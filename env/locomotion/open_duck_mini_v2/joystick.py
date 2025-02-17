@@ -34,7 +34,7 @@ from . import base as open_duck_mini_v2_base
 
 
 
-# TO TRY : 
+# TO TRY :
 # - reduce action_scale
 # - curriculum training (less push, less noise, less delay, only forward at start etc)
 # https://chatgpt.com/share/67b0df9c-6a68-8011-8f04-a72fae95ba63
@@ -75,9 +75,9 @@ def default_config() -> config_dict.ConfigDict:
               orientation=-1.0,
               base_height=0.0,
               # Energy related rewards.
-              torques=-2.5e-5,
-              action_rate=-0.1, # Was -0.01
-              energy=-2.5e-5,
+              torques=0, #-2.5e-5,
+              action_rate=-0.2, #-0.1, # Was -0.01 (action diff)
+              energy=0, #-2.5e-5,
               # Feet related rewards.
               feet_clearance=0.0,
               feet_air_time=2.0,
@@ -90,8 +90,8 @@ def default_config() -> config_dict.ConfigDict:
               alive=0.0,
               termination=-1.0,
               # Pose related rewards.
-              joint_deviation_knee=-0.1,
-              joint_deviation_hip=-0.25,
+              joint_deviation_knee=-0.0, #-0.1
+              joint_deviation_hip=-0.0, #-0.25,
               dof_pos_limits=-1.0,
               pose=-1.0,
           ),

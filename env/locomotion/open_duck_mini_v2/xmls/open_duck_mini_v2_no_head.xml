@@ -107,7 +107,8 @@
     <!-- <position kp="6.55" kv="0.0" forcerange="-3.57 3.57"/> -->
     <!-- 6.55 is equivalent to 32 firmware kp, 4.0 is equivalent to 20 firmware kp -->
     <!-- <position kp="4.0" kv="0.0" forcerange="-3.57 3.57"/>  -->
-    <position kp="6.55" kv="0.0" forcerange="-3.57 3.57"/> 
+    <position kp="6.55" kv="0.0" forcerange="-3.57 3.57"/>
+
   </default>
   <contact>
     <exclude name="exclude1" body1="trunk_assembly" body2="neck_yaw_assembly"/>

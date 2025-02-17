@@ -132,8 +132,9 @@ print("ENVIRONEMENT LOADED")
 x_data, y_data, y_dataerr = [], [], []
 times = [datetime.now()]
 
+LOCAL_PATH=os.path.abspath(".")
 ckpt_path = epath.Path(
-    "/home/apirrone/MISC/openduckminiv2_playground/openduckminiv2_playground/ckpts"
+    LOCAL_PATH+"/ckpts"
 )
 ckpt_path.mkdir(parents=True, exist_ok=True)
 writer = SummaryWriter(log_dir=ckpt_path)
@@ -197,8 +198,8 @@ make_inference_fn, params, metrics = train_fn(
     wrap_env_fn=wrapper.wrap_for_brax_training,
 )
 print("TRAINED")
-print(f"time to jit: {times[1] - times[0]}")
-print(f"time to train: {times[-1] - times[1]}")
+# print(f"time to jit: {times[1] - times[0]}")
+# print(f"time to train: {times[-1] - times[1]}")
 
 plt.xlim([0, ppo_params["num_timesteps"] * 1.25])
 plt.xlabel("# environment steps")
