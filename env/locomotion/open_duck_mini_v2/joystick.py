@@ -46,7 +46,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=1000,
       action_repeat=1,
-      action_scale=0.35,
+      action_scale=0.4,
       history_len=0,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
@@ -72,7 +72,7 @@ def default_config() -> config_dict.ConfigDict:
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=-0.15,
-              orientation=-1.0,
+              orientation=-2.0,
               base_height=0.0,
               # Energy related rewards.
               torques=-2.5e-5,
