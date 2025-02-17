@@ -83,7 +83,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_air_time=3.0,
               feet_slip=-0.25,
               feet_height=0,
-              feet_phase=1.0,
+              feet_phase=0.0, # 1.0
               both_feet_up=0.0, # doesn't seem to bother the policy lol, even with -1000
               # Other rewards.
               stand_still=0.0,
