@@ -71,7 +71,7 @@ def default_config() -> config_dict.ConfigDict:
               tracking_ang_vel=0.5,
               # Base related rewards.
               lin_vel_z=0.0,
-              ang_vel_xy=-0.15,
+              ang_vel_xy=0.0, # -0.15
               orientation=-2.0,
               base_height=0.0,
               # Energy related rewards.
@@ -590,7 +590,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   ) -> jax.Array:
     # lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
     # return jp.nan_to_num(jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma))
-    y_tol = 0.05
+    y_tol = 0.1
     error_x = jp.square(commands[0] - local_vel[0])
     error_y = jp.clip(jp.abs(local_vel[1] - commands[1]) - y_tol, 0.0, None)
     lin_vel_error = error_x + jp.square(error_y)

@@ -82,7 +82,6 @@ data.qpos[7:] = init_pos
 data.ctrl[:] = init_pos
 
 
-
 gyro_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "gyro")
 gyro_dimensions = 3
 linvel_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "local_linvel")
@@ -129,7 +128,37 @@ def get_phase():
     # return np.concatenate([cos, sin])
 
 
+def check_contact(data, model, body1_name, body2_name):
+    body1_id = data.body(body1_name).id
+    body2_id = data.body(body2_name).id
+
+    for i in range(data.ncon):
+        try:
+            contact = data.contact[i]
+        except Exception as e:
+            return False
+
+        if (
+            model.geom_bodyid[contact.geom1] == body1_id
+            and model.geom_bodyid[contact.geom2] == body2_id
+        ) or (
+            model.geom_bodyid[contact.geom1] == body2_id
+            and model.geom_bodyid[contact.geom2] == body1_id
+        ):
+            return True
+
+    return False
+
+
+def get_feet_contacts():
+    left_contact = check_contact(data, model, "foot_assembly", "floor")
+    right_contact = check_contact(data, model, "foot_assembly_2", "floor")
+    return left_contact, right_contact
+
+
 phases = []
+
+
 def get_obs(
     data, last_action, command, qvel_history, qpos_error_history, gravity_history
 ):
@@ -140,6 +169,7 @@ def get_obs(
     joint_angles = data.qpos[7:]
     joint_vel = data.qvel[6:]
     phase = get_phase()
+    contacts = get_feet_contacts()
     # phases.append(phase)
 
     if history_len > 0:
@@ -164,6 +194,7 @@ def get_obs(
             joint_vel,
             last_action,
             phase,
+            contacts,
             qpos_error_history,  # is [] if history_len == 0
             qvel_history,  # is [] if history_len == 0
             gravity_history,  # is [] if history_len == 0
@@ -200,7 +231,7 @@ def handle_keyboard():
     commands[1] = lin_vel_y
     commands[2] = ang_vel
 
-    print(commands)
+    # print(commands)
 
     pygame.event.pump()  # process event queue
 
