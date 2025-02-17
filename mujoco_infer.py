@@ -29,7 +29,7 @@ linearVelocityScale = 1.0
 angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 1.0
-action_scale = 0.5
+action_scale = 0.35
 history_len = 0
 
 init_pos = np.array(
@@ -65,7 +65,7 @@ mujoco.mj_step(model, data)
 
 policy = OnnxInfer(args.onnx_model_path, awd=True)
 
-COMMANDS_RANGE_X = [-0.2, 0.3]
+COMMANDS_RANGE_X = [-0.1, 0.15]
 COMMANDS_RANGE_Y = [-0.2, 0.2]
 COMMANDS_RANGE_THETA = [-0.5, 0.5]
 
