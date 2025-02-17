@@ -74,10 +74,10 @@ def default_config() -> config_dict.ConfigDict:
               ang_vel_xy=0.0, # -0.15
               orientation=-1.0,
               base_height=0.0,
-              base_y_swing=100.0,
+              base_y_swing=0.0, # doesn't seem to work at all
               # Energy related rewards.
               torques=-2.5e-5,
-              action_rate=-0.1, # Was -0.01
+              action_rate=-0.01, # Was -0.01
               energy=-2.5e-5,
               # Feet related rewards.
               feet_clearance=0.0,
