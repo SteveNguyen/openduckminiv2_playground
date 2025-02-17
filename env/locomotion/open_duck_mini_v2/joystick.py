@@ -93,7 +93,7 @@ def default_config() -> config_dict.ConfigDict:
               joint_deviation_knee=0.0, # -0.1
               joint_deviation_hip=0.0, # -0.25
               dof_pos_limits=0.0, #-1.0
-              pose=0, # -1.0
+              pose=-1.0, # -1.0
           ),
           tracking_sigma=0.01, # was working at 0.01
           max_foot_height=0.03,  #0.1,
