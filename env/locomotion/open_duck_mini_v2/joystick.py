@@ -81,10 +81,10 @@ def default_config() -> config_dict.ConfigDict:
               energy=-2.5e-5,
               # Feet related rewards.
               feet_clearance=0.0,
-              feet_air_time=2.0,
+              feet_air_time=5.0,
               feet_slip=-0.25,
               feet_height=0,
-              feet_phase=0.0, # 1.0
+              feet_phase=2.0, # 1.0
               both_feet_up=0.0, # doesn't seem to bother the policy lol, even with -1000
               # Other rewards.
               stand_still=0.0,
