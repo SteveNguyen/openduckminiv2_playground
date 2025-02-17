@@ -76,13 +76,13 @@ def default_config() -> config_dict.ConfigDict:
               base_height=0.0,
               # Energy related rewards.
               torques=-2.5e-5,
-              action_rate=-0.1, # Was -0.01
+              action_rate=-0.01, # Was -0.01
               energy=-2.5e-5,
               # Feet related rewards.
               feet_clearance=0.0,
               feet_air_time=2.0,
               feet_slip=-0.1,
-              feet_height=-0.5,
+              feet_height=0,
               feet_phase=1.0,
               both_feet_up=0.0, # doesn't seem to bother the policy lol, even with -1000
               # Other rewards.
@@ -96,7 +96,7 @@ def default_config() -> config_dict.ConfigDict:
               pose=-1.0,
           ),
           tracking_sigma=0.002, # was working at 0.01
-          max_foot_height=0.03,  #0.1,
+          max_foot_height=0.04,  #0.1,
           base_height_target=0.15,  #0.5,
       ),
       push_config=config_dict.create(
