@@ -67,12 +67,12 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=1.5,
-              tracking_ang_vel=0.8,
+              tracking_lin_vel=1.0,
+              tracking_ang_vel=0.5,
               # Base related rewards.
-              lin_vel_z=-2.0,
-              ang_vel_xy=-0.05,
-              orientation=-0.1,
+              lin_vel_z=0.0,
+              ang_vel_xy=-0.15,
+              orientation=-1.0,
               base_height=0.0,
               # Energy related rewards.
               torques=-2.5e-5,
@@ -81,7 +81,7 @@ def default_config() -> config_dict.ConfigDict:
               # Feet related rewards.
               feet_clearance=0.0,
               feet_air_time=2.0,
-              feet_slip=-0.1,
+              feet_slip=-0.25,
               feet_height=0,
               feet_phase=1.0,
               both_feet_up=0.0, # doesn't seem to bother the policy lol, even with -1000
@@ -95,8 +95,8 @@ def default_config() -> config_dict.ConfigDict:
               dof_pos_limits=-1.0,
               pose=-1.0,
           ),
-          tracking_sigma=0.002, # was working at 0.01
-          max_foot_height=0.04,  #0.1,
+          tracking_sigma=0.01, # was working at 0.01
+          max_foot_height=0.03,  #0.1,
           base_height_target=0.15,  #0.5,
       ),
       push_config=config_dict.create(
@@ -104,12 +104,12 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.1, 1.0],
       ),
-      # lin_vel_x=[-0.2, 0.3],
-      # lin_vel_y=[-0.2, 0.2],
-      # ang_vel_yaw=[-0.5, 0.5],
-      lin_vel_x=[0.0, 0.1],
-      lin_vel_y=[-0.1, 0.1],
-      ang_vel_yaw=[-0.3, 0.3],
+      lin_vel_x=[-0.2, 0.3],
+      lin_vel_y=[-0.2, 0.2],
+      ang_vel_yaw=[-0.5, 0.5],
+      # lin_vel_x=[0.0, 0.1],
+      # lin_vel_y=[-0.1, 0.1],
+      # ang_vel_yaw=[-0.3, 0.3],
   )
 
 
