@@ -52,7 +52,7 @@ def default_config() -> config_dict.ConfigDict:
       noise_config=config_dict.create(
           level=1.0,  # Set to 0.0 to disable noise.
           action_min_delay=0,  # env steps
-          action_max_delay=1,  # env steps
+          action_max_delay=4,  # env steps
           scales=config_dict.create(
               hip_pos=0.03,  # rad #for each hip joint
               kfe_pos=0.05, # kfe=Knee Pitch
