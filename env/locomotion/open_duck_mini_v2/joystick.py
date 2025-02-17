@@ -108,8 +108,8 @@ def default_config() -> config_dict.ConfigDict:
       # lin_vel_y=[-0.2, 0.2],
       # ang_vel_yaw=[-0.5, 0.5],
       lin_vel_x=[0.0, 0.1],
-      lin_vel_y=[0.0, 0.0],
-      ang_vel_yaw=[0.0, 0.0],
+      lin_vel_y=[-0.1, 0.1],
+      ang_vel_yaw=[-0.3, 0.3],
   )
 
 
