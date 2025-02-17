@@ -71,12 +71,12 @@ def default_config() -> config_dict.ConfigDict:
               tracking_ang_vel=0.5,
               # Base related rewards.
               lin_vel_z=0.0,
-              ang_vel_xy=-0.05, # -0.15
+              ang_vel_xy=-0.05, # -0.0 was ok
               orientation=-2.0,
               base_height=0.0,
               # Energy related rewards.
               torques=-2.5e-5,
-              action_rate=-0.1, # Was -0.01
+              action_rate=-0.1, # -0.15 was ok
               energy=-2.5e-5,
               # Feet related rewards.
               feet_clearance=0.0,
@@ -735,7 +735,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       first_contact: jax.Array,
       commands: jax.Array,
       threshold_min: float = 0.2, # 0.1
-      threshold_max: float = 0.7,
+      threshold_max: float = 0.7, # 0.5
   ) -> jax.Array:
     cmd_norm = jp.linalg.norm(commands)
     air_time = (air_time - threshold_min) * first_contact
