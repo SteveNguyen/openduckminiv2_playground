@@ -79,7 +79,7 @@ def default_config() -> config_dict.ConfigDict:
               base_y_swing=0.0,
               # Energy related rewards.
               torques=-1.0e-3,
-              action_rate=-0.1,
+              action_rate=-0.01,
               energy=0.0,
               # Feet related rewards.
               feet_clearance=0.0,
