@@ -68,20 +68,21 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=1.5,
-              tracking_ang_vel=1.0,
+              tracking_lin_vel=1.0,
+              tracking_ang_vel=0.5,
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=-0.15,
-              orientation=-1.0,
+              orientation=0.0,
               base_height=0.0,
+              base_y_swing=0.0, # doesn't seem to work at all
               # Energy related rewards.
               torques=-2.5e-5,
-              action_rate=-0.1, # Was -0.01
+              action_rate=-0.01, # Was -0.01
               energy=-2.5e-5,
               # Feet related rewards.
               feet_clearance=0.0,
-              feet_air_time=2.0,
+              feet_air_time=5.0,
               feet_slip=-0.25,
               feet_height=0.0,
               feet_phase=0.0,
@@ -91,12 +92,12 @@ def default_config() -> config_dict.ConfigDict:
               termination=-1.0,
               imitation=1.0,
               # Pose related rewards.
-              joint_deviation_knee=-0.1,
-              joint_deviation_hip=-0.25,
-              dof_pos_limits=-1.0,
-              pose=-1.0,
+              joint_deviation_knee=0.0, # -0.1
+              joint_deviation_hip=0.0, # -0.25
+              dof_pos_limits=0.0, #-1.0
+              pose=-1.0, # -1.0
           ),
-          tracking_sigma=0.005, # was working at 0.01
+          tracking_sigma=0.01, # was working at 0.01
           max_foot_height=0.03,  #0.1,
           base_height_target=0.15,  #0.5,
       ),
@@ -105,9 +106,12 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.1, 1.0],
       ),
-      lin_vel_x=[-0.2, 0.3],
+      lin_vel_x=[-0.1, 0.15],
       lin_vel_y=[-0.2, 0.2],
       ang_vel_yaw=[-0.5, 0.5],
+      # lin_vel_x=[0.0, 0.1],
+      # lin_vel_y=[-0.1, 0.1],
+      # ang_vel_yaw=[-0.3, 0.3],
   )
 
 
@@ -261,6 +265,10 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     phase_dt = 2 * jp.pi * self.dt * gait_freq
     phase = jp.array([0, jp.pi])
 
+    base_y_swing_freq = 1.5  # hz
+    base_y_swing_amplitude = 0.06  # 6 centimeters
+    base_t = 0.0
+
     rng, cmd_rng = jax.random.split(rng)
     cmd = self.sample_command(cmd_rng)
 
@@ -283,6 +291,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "feet_air_time": jp.zeros(2),
         "last_contact": jp.zeros(2, dtype=bool),
         "swing_peak": jp.zeros(2),
+        "base_y_swing_freq": base_y_swing_freq,
+        "base_y_swing_amplitude": base_y_swing_amplitude,
+        "base_t": base_t,
         # Phase related.
         "phase_dt": phase_dt,
         "phase": phase,
@@ -300,12 +311,11 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     metrics = {}
     for k, v in self._config.reward_config.scales.items():
-      if v != 0: # Don't add metrics for zero rewards.
-        if v < 0:
-          metrics[f"cost/{k}"] = jp.zeros(())
-        else:
+      if v != 0:
+        if v > 0:
           metrics[f"reward/{k}"] = jp.zeros(())
-
+        else:
+          metrics[f"cost/{k}"] = jp.zeros(())
     metrics["swing_peak"] = jp.zeros(())
 
     contact = jp.array([
@@ -352,6 +362,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     qvel = qvel.at[:2].set(push * push_magnitude + qvel[:2])
     data = state.data.replace(qvel=qvel)
     state = state.replace(data=data)
+
+    state.info["base_t"] += self.dt
 
     motor_targets = self._default_pose + action_w_delay * self._config.action_scale
     data = mjx_env.step(
@@ -404,11 +416,11 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     state.info["swing_peak"] *= ~contact
     for k, v in rewards.items():
       rew_scale = self._config.reward_config.scales[k]
-      if rew_scale != 0: # Don't add metrics for zero rewards.
-        if rew_scale < 0:
-          state.metrics[f"cost/{k}"] = v
-        else:
+      if rew_scale != 0:
+        if rew_scale > 0:
           state.metrics[f"reward/{k}"] = v
+        else:
+          state.metrics[f"cost/{k}"] = -v
     state.metrics["swing_peak"] = jp.mean(state.info["swing_peak"])
 
     done = done.astype(reward.dtype)
@@ -499,7 +511,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         noisy_joint_angles - self._default_pose,  # 10
         noisy_joint_vel,  # 10
         info["last_act"],  # 10
-        # phase, # 4
+        phase, # 2
+        contact, # 2
         qpos_error_history,
         qvel_history,
         gravity_hisory,
@@ -562,6 +575,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "ang_vel_xy": self._cost_ang_vel_xy(self.get_global_angvel(data)),
         "orientation": self._cost_orientation(self.get_gravity(data)),
         "base_height": self._cost_base_height(data.qpos[2]),
+        "base_y_swing": self._reward_base_y_swing(data.qvel[1], info["base_y_swing_freq"], info["base_y_swing_amplitude"], info["base_t"]),
         # Energy related rewards.
         "torques": self._cost_torques(data.actuator_force),
         "action_rate": self._cost_action_rate(
@@ -583,6 +597,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
             self._config.reward_config.max_foot_height,
             info["command"],
         ),
+        "both_feet_up": self._cost_both_feet_up(contact),
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
@@ -615,15 +630,31 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       commands: jax.Array,
       local_vel: jax.Array,
   ) -> jax.Array:
-    # In order to move forward, the robot has to have a swing gait that adds to the y error
-    # Ideally, implement average velocity like in AWD ?
-    x_lin_vel_error = jp.sum(jp.square(commands[0] - local_vel[0]))
-    y_lin_vel_error = jp.sum(jp.square(commands[1] - local_vel[1]))
-    x_w = 0.8
-    y_w = 0.2
-    lin_vel_error = x_w * x_lin_vel_error + y_w * y_lin_vel_error
     # lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
+    # return jp.nan_to_num(jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma))
+    y_tol = 0.1
+    error_x = jp.square(commands[0] - local_vel[0])
+    error_y = jp.clip(jp.abs(local_vel[1] - commands[1]) - y_tol, 0.0, None)
+    lin_vel_error = error_x + jp.square(error_y)
     return jp.nan_to_num(jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma))
+
+  # def _reward_tracking_lin_vel(self, commands, local_vel):
+  #     # commands[:2] -> [x_cmd, y_cmd]
+  #     # local_vel[:2] -> [x_vel, y_vel]
+  #     target = commands[:2]
+  #     actual = local_vel[:2]
+
+  #     # Give a tolerance (e.g. ±0.02 m/s) for the y-velocity:
+  #     tol = 0.02
+  #     # Flatten out the error if |y_vel| < 0.02
+  #     error_y = jp.clip(jp.abs(actual[1] - target[1]) - tol, 0.0, None)
+
+  #     # For x-velocity, do a standard squared error
+  #     error_x = jp.square(actual[0] - target[0])
+
+  #     # Combine them
+  #     lin_vel_error = error_x + jp.square(error_y)
+  #     return jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma)
 
   def _reward_tracking_ang_vel(
       self,
@@ -648,6 +679,13 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     return jp.nan_to_num(jp.square(
         base_height - self._config.reward_config.base_height_target
     ))
+
+  def _reward_base_y_swing(
+      self, base_y_speed: jax.Array, freq: float, amplitude: float, t: float
+  ) -> jax.Array:
+    target_y_speed = amplitude * jp.sin(2 * jp.pi * freq * t)
+    y_speed_error = jp.square(target_y_speed - base_y_speed)
+    return jp.nan_to_num(jp.exp(-y_speed_error / self._config.reward_config.tracking_sigma))
 
   # Energy related rewards.
 
@@ -805,6 +843,12 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     # cmd_norm = jp.linalg.norm(commands)
     # reward *= cmd_norm > 0.1  # No reward for zero commands.
     return jp.nan_to_num(reward)
+
+  def _cost_both_feet_up(self, contact: jax.Array) -> jax.Array:
+    # contact [0, 0] if both feet are in the air, [1, 1] if both feet are on the ground
+
+    both_up = jp.all(contact == 0)
+    return jp.nan_to_num(both_up)
 
   def sample_command(self, rng: jax.Array) -> jax.Array:
     rng1, rng2, rng3, rng4 = jax.random.split(rng, 4)

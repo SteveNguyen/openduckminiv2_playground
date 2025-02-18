@@ -31,7 +31,7 @@ linearVelocityScale = 1.0
 angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 1.0
-action_scale = 0.5
+action_scale = 0.4
 history_len = 0
 
 init_pos = np.array(
@@ -67,9 +67,13 @@ mujoco.mj_step(model, data)
 
 policy = OnnxInfer(args.onnx_model_path, awd=True)
 
-COMMANDS_RANGE_X = [-0.2, 0.3]
+COMMANDS_RANGE_X = [-0.1, 0.15]
 COMMANDS_RANGE_Y = [-0.2, 0.2]
 COMMANDS_RANGE_THETA = [-0.5, 0.5]
+
+# COMMANDS_RANGE_X = [0., 0.1]
+# COMMANDS_RANGE_Y = [0, 0]
+# COMMANDS_RANGE_THETA = [0, 0]
 
 prev_action = np.zeros(NUM_DOFS)
 commands = [0.0, 0.0, 0.0]
@@ -130,6 +134,34 @@ def get_phase():
     # return np.concatenate([cos, sin])
 
 
+def check_contact(data, model, body1_name, body2_name):
+    body1_id = data.body(body1_name).id
+    body2_id = data.body(body2_name).id
+
+    for i in range(data.ncon):
+        try:
+            contact = data.contact[i]
+        except Exception as e:
+            return False
+
+        if (
+            model.geom_bodyid[contact.geom1] == body1_id
+            and model.geom_bodyid[contact.geom2] == body2_id
+        ) or (
+            model.geom_bodyid[contact.geom1] == body2_id
+            and model.geom_bodyid[contact.geom2] == body1_id
+        ):
+            return True
+
+    return False
+
+
+def get_feet_contacts():
+    left_contact = check_contact(data, model, "foot_assembly", "floor")
+    right_contact = check_contact(data, model, "foot_assembly_2", "floor")
+    return left_contact, right_contact
+
+
 phases = []
 
 
@@ -143,6 +175,7 @@ def get_obs(
     joint_angles = data.qpos[7:]
     joint_vel = data.qvel[6:]
     phase = get_phase()
+    contacts = get_feet_contacts()
     # phases.append(phase)
 
 
@@ -167,7 +200,8 @@ def get_obs(
             joint_angles - init_pos,
             joint_vel,
             last_action,
-            # phase,
+            phase,
+            contacts,
             qpos_error_history,  # is [] if history_len == 0
             qvel_history,  # is [] if history_len == 0
             gravity_history,  # is [] if history_len == 0
