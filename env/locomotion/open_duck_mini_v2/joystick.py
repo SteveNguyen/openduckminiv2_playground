@@ -48,7 +48,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=450,
       action_repeat=1,
-      action_scale=0.5,
+      action_scale=1.0,
       history_len=0,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
