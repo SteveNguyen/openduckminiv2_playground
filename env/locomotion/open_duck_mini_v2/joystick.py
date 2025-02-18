@@ -558,6 +558,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         info["last_act"],  # 10
         phase,  # 2
         contact,  # 2
+        info["current_reference_motion"],
         qpos_error_history,
         qvel_history,
         gravity_hisory,
@@ -783,7 +784,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   ) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
 
-    w_torso_pos = 0.0
+    w_torso_pos = 1.0
     w_torso_orientation = 1.0
     w_lin_vel_xy = 1.0
     w_lin_vel_z = 1.0
