@@ -77,7 +77,9 @@ COMMANDS_RANGE_THETA = [-0.5, 0.5]
 # COMMANDS_RANGE_Y = [0, 0]
 # COMMANDS_RANGE_THETA = [0, 0]
 
-prev_action = np.zeros(NUM_DOFS)
+last_action = np.zeros(NUM_DOFS)
+last_last_action = np.zeros(NUM_DOFS)
+last_last_last_action = np.zeros(NUM_DOFS)
 commands = [0.0, 0.0, 0.0]
 decimation = 10
 data.qpos[3 : 3 + 4] = [1, 0, 0.0, 0]
@@ -204,6 +206,8 @@ def get_obs(
             joint_angles - init_pos,
             joint_vel,
             last_action,
+            last_last_action,
+            last_last_last_action,
             # phase,
             contacts,
             ref,
@@ -275,7 +279,7 @@ try:
                 # reference = reference_motion[reference_i]
                 obs = get_obs(
                     data,
-                    prev_action,
+                    last_action,
                     commands,
                     qvel_history,
                     qpos_error_history,
@@ -284,7 +288,9 @@ try:
                 saved_obs.append(obs)
                 action = policy.infer(obs)
 
-                prev_action = action.copy()
+                last_last_last_action = last_last_action.copy()
+                last_last_action = last_action.copy()
+                last_action = action.copy()
 
                 action = init_pos + action * action_scale
                 data.ctrl = action.copy()

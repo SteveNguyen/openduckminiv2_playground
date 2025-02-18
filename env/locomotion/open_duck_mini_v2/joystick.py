@@ -316,6 +316,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "command": cmd,
         "last_act": jp.zeros(self.mjx_model.nu),
         "last_last_act": jp.zeros(self.mjx_model.nu),
+        "last_last_last_act": jp.zeros(self.mjx_model.nu),
         "motor_targets": jp.zeros(self.mjx_model.nu),
         "feet_air_time": jp.zeros(2),
         "last_contact": jp.zeros(2, dtype=bool),
@@ -443,6 +444,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     state.info["push_step"] += 1
     phase_tp1 = state.info["phase"] + state.info["phase_dt"]
     state.info["phase"] = jp.fmod(phase_tp1 + jp.pi, 2 * jp.pi) - jp.pi
+    state.info["last_last_last_act"] = state.info["last_last_act"]
     state.info["last_last_act"] = state.info["last_act"]
     state.info["last_act"] = action
     state.info["rng"], cmd_rng = jax.random.split(state.info["rng"])
@@ -556,6 +558,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         noisy_joint_angles - self._default_pose,  # 10
         noisy_joint_vel,  # 10
         info["last_act"],  # 10
+        info["last_last_act"],  # 10
+        info["last_last_last_act"],  # 10
         # phase,  # 2
         contact,  # 2
         info["current_reference_motion"],
