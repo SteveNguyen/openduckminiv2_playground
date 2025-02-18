@@ -30,6 +30,7 @@ from mujoco_playground._src.collision import geoms_colliding
 
 from . import open_duck_mini_v2_constants as consts
 from . import base as open_duck_mini_v2_base
+from reference_motion import process_reference_motion, get_closest_reference_motion
 
 
 
@@ -68,38 +69,38 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=1.0,
-              tracking_ang_vel=0.5,
+              tracking_lin_vel=0.0,
+              tracking_ang_vel=0.0,
               # Base related rewards.
               lin_vel_z=0.0,
-              ang_vel_xy=-0.15,
+              ang_vel_xy=0.0,
               orientation=0.0,
               base_height=0.0,
-              base_y_swing=0.0, # doesn't seem to work at all
+              base_y_swing=0.0,
               # Energy related rewards.
-              torques=-2.5e-5,
-              action_rate=-0.01, # Was -0.01
-              energy=-2.5e-5,
+              torques=-1.0e-3,
+              action_rate=-1.5,
+              energy=0.0,
               # Feet related rewards.
               feet_clearance=0.0,
-              feet_air_time=5.0,
-              feet_slip=-0.25,
+              feet_air_time=0.0,
+              feet_slip=0.0,
               feet_height=0.0,
               feet_phase=0.0,
               # Other rewards.
               stand_still=0.0,
-              alive=0.0,
-              termination=-1.0,
+              alive=20.0,
+              termination=0.0,
               imitation=1.0,
               # Pose related rewards.
-              joint_deviation_knee=0.0, # -0.1
-              joint_deviation_hip=0.0, # -0.25
-              dof_pos_limits=0.0, #-1.0
-              pose=-1.0, # -1.0
+              joint_deviation_knee=0.0,  # -0.1
+              joint_deviation_hip=0.0,  # -0.25
+              dof_pos_limits=0.0,  # -1.0
+              pose=0.0,  # -1.0
           ),
-          tracking_sigma=0.01, # was working at 0.01
-          max_foot_height=0.03,  #0.1,
-          base_height_target=0.15,  #0.5,
+          tracking_sigma=0.01,  # was working at 0.01
+          max_foot_height=0.03,  # 0.1,
+          base_height_target=0.15,  # 0.5,
       ),
       push_config=config_dict.create(
           enable=True,
@@ -136,13 +137,28 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
     self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
 
-    reference_motion = json.load(open("reference_motion/0_processed.json"))
-    self.reference_pos = jp.array(reference_motion["joints_pos"])
-    self.reference_vel = jp.array(reference_motion["joints_vel"])
-    self.reference_left_toe_z = jp.array(reference_motion["left_toe_z"])
-    self.reference_right_toe_z = jp.array(reference_motion["right_toe_z"])
-    self.period = 0.6599
-    self.nb_frames_in_one_walk_cycle = int((1/self._config.ctrl_dt) * self.period)
+    ( 
+      self.reference_data_array,
+      self.dx_range,
+      self.dy_range,
+      self.dtheta_range,
+      self.dxs,
+      self.dys,
+      self.dthetas,
+      self.ref_motion_fps,
+      self.period,
+      # self.root_pos_slice,
+      # self.root_quat_slice,
+      # self.linear_vel_slice,
+      # self.angular_vel_slice,
+      # self.joint_pos_slice,
+      # self.joint_vels_slice,
+      # self.left_toe_pos_slice,
+      # self.right_toe_pos_slice
+
+    ) = process_reference_motion("/home/apirrone/MISC/openduckminiv2_playground/ref_motion")
+    # self.nb_frames_in_one_walk_cycle = int((1/self._config.ctrl_dt) * self.period)
+    self.nb_frames_in_reference_motion = 450 # TODO extract this from the reference motion data
 
     # Note: First joint is freejoint.
     # get the range of the joints
@@ -169,7 +185,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       knee_indices.append(self._mj_model.joint(f"{side}_knee").qposadr - 7)
     # print(f"KNEE INDICES: {knee_indices}")
     self._knee_indices = jp.array(knee_indices)
-
     # weights for computing the cost of each joints compared to a reference pose
     # fmt: off
     # self._weights = jp.array([
@@ -281,6 +296,20 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     )
     push_interval_steps = jp.round(push_interval / self.dt).astype(jp.int32)
 
+    current_reference_motion = get_closest_reference_motion(
+      self.reference_data_array,
+      cmd[0],
+      cmd[1],
+      cmd[2],
+      0,
+      self.dx_range,
+      self.dy_range,
+      self.dtheta_range,
+      self.dxs,
+      self.dys,
+      self.dthetas
+    )
+
     info = {
         "rng": rng,
         "step": 0,
@@ -307,6 +336,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "gravity_history": jp.zeros(self._config.history_len * 3),
         "action_history": jp.zeros(self._config.noise_config.action_max_delay * self._njoints),
         "imitation_i": 0,
+        "current_reference_motion": current_reference_motion
     }
 
     metrics = {}
@@ -329,7 +359,22 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
 
     state.info["imitation_i"] += 1
-    state.info["imitation_i"] = state.info["imitation_i"] % self.nb_frames_in_one_walk_cycle
+    state.info["imitation_i"] = state.info["imitation_i"] % self.nb_frames_in_reference_motion
+    # state.info["imitation_i"] = state.info["imitation_i"] % self.nb_frames_in_one_walk_cycle
+
+    state.info["current_reference_motion"] = get_closest_reference_motion(
+      self.reference_data_array, 
+      state.info["command"][0],
+      state.info["command"][1],
+      state.info["command"][2],
+      state.info["imitation_i"],
+      self.dx_range,
+      self.dy_range,
+      self.dtheta_range,
+      self.dxs,
+      self.dys,
+      self.dthetas
+    )
 
     state.info["rng"], push1_rng, push2_rng, action_delay_rng = jax.random.split(
         state.info["rng"], 4
@@ -511,12 +556,12 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         noisy_joint_angles - self._default_pose,  # 10
         noisy_joint_vel,  # 10
         info["last_act"],  # 10
-        phase, # 2
-        contact, # 2
+        phase,  # 2
+        contact,  # 2
         qpos_error_history,
         qvel_history,
         gravity_hisory,
-        info["imitation_i"],
+        # info["imitation_i"],
     ])
 
     accelerometer = self.get_accelerometer(data)
@@ -538,11 +583,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         contact,  # 2
         feet_vel,  # 4*3
         info["feet_air_time"],  # 2
-        self.reference_pos[info["imitation_i"]],  # 10
-        self.reference_vel[info["imitation_i"]],  # 10
-        self.reference_left_toe_z[info["imitation_i"]],  # 1
-        self.reference_right_toe_z[info["imitation_i"]],  # 1
-        info["imitation_i"],
+        # info["imitation_i"],
+        info["current_reference_motion"]
     ])
 
     return {
@@ -597,20 +639,23 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
             self._config.reward_config.max_foot_height,
             info["command"],
         ),
-        "both_feet_up": self._cost_both_feet_up(contact),
+        # "both_feet_up": self._cost_both_feet_up(contact),
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
         "imitation": self._reward_imitation(
-          data,
-          data.qpos[7:],
-          data.qvel[6:],
-          self.reference_pos[info["imitation_i"]],
-          self.reference_vel[info["imitation_i"]],
-          self.reference_left_toe_z[info["imitation_i"]],
-          self.reference_right_toe_z[info["imitation_i"]],
-          self._config.reward_config.max_foot_height
-          ),
+          data.qpos,
+          data.qvel,
+          info["command"],
+          contact,
+          info["current_reference_motion"],
+          # self.linear_vel_slice,
+          # self.angular_vel_slice,
+          # self.joint_pos_slice,
+          # self.joint_vels_slice,
+          # self.left_toe_pos_slice,
+          # self.right_toe_pos_slice,
+        ),
         "stand_still": self._cost_stand_still(info["command"], data.qpos[7:]),
         # Pose related rewards.
         "joint_deviation_hip": self._cost_joint_deviation_hip(
@@ -722,36 +767,107 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   def _cost_termination(self, done: jax.Array) -> jax.Array:
     return done
 
-  def _reward_imitation(self,
-    data: mjx.Data,
+  def _reward_imitation(
+    self, 
     qpos: jax.Array,
     qvel: jax.Array,
-    reference_pos: jax.Array,
-    reference_vel: jax.Array,
-    reference_left_toe_z: jax.Array,
-    reference_right_toe_z: jax.Array,
-    max_foot_height: float,
-    ) -> jax.Array:
+    commands: jax.Array,
+    contacts: jax.Array,
+    reference_frame: jax.Array,
+    # linear_vel_slice: jax.Array,
+    # angular_vel_slice: jax.Array,
+    # joint_pos_slice: jax.Array,
+    # joint_vels_slice: jax.Array,
+    # left_toe_pos_slice: jax.Array,
+    # right_toe_pos_slice: jax.Array
+
+  ) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
-    error_pos = jp.sum(jp.square(qpos - reference_pos))
-    error_vel = jp.sum(jp.square(qvel - reference_vel))
 
-    pos_w = 0.1
-    vel_w = 0.1
-    feet_w = 0.8
+    w_torso_pos = 1.0
+    w_torso_orientation = 1.0
+    w_lin_vel_xy = 1.0
+    w_lin_vel_z = 1.0
+    w_ang_vel_xy = 0.5
+    w_ang_vel_z = 0.5
+    w_joint_pos = 15.0
+    w_joint_vel = 1.0e-3
+    w_contact = 1.0
 
-    feet_pos = data.site_xpos[self._feet_site_id] 
-    feet_z = feet_pos[..., -1]  # [left, right]
-    reference_feet_z = jp.array([reference_left_toe_z, reference_right_toe_z])
-    # error_feet = jp.sum(jp.square(feet_z - reference_feet_z))
+    linear_vel_slice_start = 29
+    linear_vel_slice_end = 32
 
-    # error_feet should be zero when feet_z is same as reference_feet_z
-    # error_feet should be 1 when feet_z is at max_foot_height different from reference_feet_z
+    angular_vel_slice_start = 32
+    angular_vel_slice_end = 35
 
-    error_feet = jp.sum(jp.abs(feet_z - reference_feet_z) / max_foot_height)
+    joint_pos_slice_start = 7
+    joint_pos_slice_end = 23
 
-    error = pos_w * error_pos + vel_w * error_vel + feet_w * error_feet
-    return jp.nan_to_num(jp.exp(-error / 0.5))
+    joint_vels_slice_start = 35
+    joint_vels_slice_end = 51
+
+    root_pos_slice_start = 0
+    root_pos_slice_end = 3
+
+    root_quat_slice_start = 3
+    root_quat_slice_end = 7
+
+    left_toe_pos_slice_start = 23
+    left_toe_pos_slice_end = 26
+
+    right_toe_pos_slice_start = 26
+    right_toe_pos_slice_end = 29
+
+    foot_contacts_slice_start = 57
+    foot_contacts_slice_end = 59
+
+
+    ref_base_pos = reference_frame[root_pos_slice_start:root_pos_slice_end]
+    base_pos = qpos[:3]
+
+    ref_base_orientation_quat = reference_frame[root_quat_slice_start:root_quat_slice_end]
+    base_orientation = qpos[3:7]
+
+    ref_base_lin_vel = reference_frame[linear_vel_slice_start:linear_vel_slice_end]
+    base_lin_vel = qvel[:3]
+
+    ref_base_ang_vel = reference_frame[angular_vel_slice_start:angular_vel_slice_end]    
+    base_ang_vel = qvel[3:6]
+
+    ref_joint_pos = reference_frame[joint_pos_slice_start:joint_pos_slice_end]
+    # remove the neck and head
+    ref_joint_pos = jp.concatenate([ref_joint_pos[:5], ref_joint_pos[11:]])
+    joint_pos = qpos[7:]
+
+    ref_joint_vels = reference_frame[joint_vels_slice_start:joint_vels_slice_end]
+    # remove the neck and head
+    ref_joint_vels = jp.concatenate([ref_joint_vels[:5], ref_joint_vels[11:]])
+    joint_vel = qvel[6:]
+
+    # ref_left_toe_pos = reference_frame[left_toe_pos_slice_start:left_toe_pos_slice_end]
+    # ref_right_toe_pos = reference_frame[right_toe_pos_slice_start:right_toe_pos_slice_end]
+
+    ref_foot_contacts = reference_frame[foot_contacts_slice_start:foot_contacts_slice_end]
+
+
+    # reward
+    torso_pos_rew = jp.exp(-200.0 * jp.sum(jp.square(base_pos[:2] - ref_base_pos[:2]))) * w_torso_pos
+    torso_orientation_rew = jp.exp(-20.0 * jp.sum(jp.square(base_orientation - ref_base_orientation_quat))) * w_torso_orientation
+
+    lin_vel_xy_rew = jp.exp(-8.0 * jp.sum(jp.square(base_lin_vel[:2] - ref_base_lin_vel[:2]))) * w_lin_vel_xy
+    lin_vel_z_rew = jp.exp(-8.0 * jp.sum(jp.square(base_lin_vel[2] - ref_base_lin_vel[2]))) * w_lin_vel_z
+
+    ang_vel_xy_rew = jp.exp(-2.0 * jp.sum(jp.square(base_ang_vel[:2] - ref_base_ang_vel[:2]))) * w_ang_vel_xy
+    ang_vel_z_rew = jp.exp(-2.0 * jp.sum(jp.square(base_ang_vel[2] - ref_base_ang_vel[2]))) * w_ang_vel_z
+
+    joint_pos_rew = -jp.sum(jp.square(joint_pos - ref_joint_pos)) * w_joint_pos
+    joint_vel_rew = -jp.sum(jp.square(joint_vel - ref_joint_vels)) * w_joint_vel
+
+    contact_rew = jp.sum(contacts == ref_foot_contacts) * w_contact
+
+    reward = torso_pos_rew + torso_orientation_rew +  lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
+
+    return jp.nan_to_num(reward)
 
 
   def _reward_alive(self) -> jax.Array:
@@ -844,11 +960,11 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     # reward *= cmd_norm > 0.1  # No reward for zero commands.
     return jp.nan_to_num(reward)
 
-  def _cost_both_feet_up(self, contact: jax.Array) -> jax.Array:
-    # contact [0, 0] if both feet are in the air, [1, 1] if both feet are on the ground
+  # def _cost_both_feet_up(self, contact: jax.Array) -> jax.Array:
+  #   # contact [0, 0] if both feet are in the air, [1, 1] if both feet are on the ground
 
-    both_up = jp.all(contact == 0)
-    return jp.nan_to_num(both_up)
+  #   both_up = jp.all(contact == 0)
+  #   return jp.nan_to_num(both_up)
 
   def sample_command(self, rng: jax.Array) -> jax.Array:
     rng1, rng2, rng3, rng4 = jax.random.split(rng, 4)

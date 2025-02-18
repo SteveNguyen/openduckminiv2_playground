@@ -205,7 +205,7 @@ def get_obs(
             qpos_error_history,  # is [] if history_len == 0
             qvel_history,  # is [] if history_len == 0
             gravity_history,  # is [] if history_len == 0
-            [imitation_i]
+            # [imitation_i]
         ]
     )
 
