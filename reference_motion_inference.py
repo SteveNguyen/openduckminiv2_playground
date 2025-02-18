@@ -5,7 +5,7 @@ from glob import glob
 import os
 import numpy as np
 import json
-from scipy.spatial.transform import Rotation as R
+# from scipy.spatial.transform import Rotation as R
 
 
 class ReferenceMotion:
