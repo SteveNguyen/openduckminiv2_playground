@@ -46,7 +46,7 @@ def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
       ctrl_dt=0.02,
       sim_dt=0.002,
-      episode_length=1000,
+      episode_length=450,
       action_repeat=1,
       action_scale=1.0,
       history_len=0,
@@ -69,8 +69,8 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=0.0,
-              tracking_ang_vel=0.0,
+              tracking_lin_vel=1.5,
+              tracking_ang_vel=0.5,
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=0.0,
@@ -79,7 +79,7 @@ def default_config() -> config_dict.ConfigDict:
               base_y_swing=0.0,
               # Energy related rewards.
               torques=-1.0e-3,
-              action_rate=-0.01,
+              action_rate=-1.5,
               energy=0.0,
               # Feet related rewards.
               feet_clearance=0.0,
@@ -89,7 +89,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_phase=0.0,
               # Other rewards.
               stand_still=0.0,
-              alive=2.0,
+              alive=20.0,
               termination=0.0,
               imitation=1.0,
               # Pose related rewards.
@@ -646,7 +646,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "imitation": self._reward_imitation(
           data.qpos,
           data.qvel,
-          info["command"],
           contact,
           info["current_reference_motion"],
           # self.linear_vel_slice,
@@ -735,7 +734,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   # Energy related rewards.
 
   def _cost_torques(self, torques: jax.Array) -> jax.Array:
-    return jp.nan_to_num(jp.sum(jp.abs(torques)))
+    return jp.nan_to_num(jp.sum(jp.square(torques)))
+    # return jp.nan_to_num(jp.sum(jp.abs(torques)))
 
   def _cost_energy(
       self, qvel: jax.Array, qfrc_actuator: jax.Array
@@ -771,7 +771,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     self, 
     qpos: jax.Array,
     qvel: jax.Array,
-    commands: jax.Array,
     contacts: jax.Array,
     reference_frame: jax.Array,
     # linear_vel_slice: jax.Array,
@@ -784,7 +783,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   ) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
 
-    w_torso_pos = 1.0
+    w_torso_pos = 0.0
     w_torso_orientation = 1.0
     w_lin_vel_xy = 1.0
     w_lin_vel_z = 1.0
