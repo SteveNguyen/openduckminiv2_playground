@@ -31,7 +31,7 @@ linearVelocityScale = 1.0
 angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 1.0
-action_scale = 1.0
+action_scale = 0.25
 history_len = 0
 
 RM = ReferenceMotion("ref_motion")
@@ -168,7 +168,6 @@ def get_feet_contacts():
 
 phases = []
 
-
 def get_obs(
     data, last_action, command, qvel_history, qpos_error_history, gravity_history
 ):
@@ -214,7 +213,6 @@ def get_obs(
             qpos_error_history,  # is [] if history_len == 0
             qvel_history,  # is [] if history_len == 0
             gravity_history,  # is [] if history_len == 0
-            # [imitation_i]
         ]
     )
 
@@ -254,14 +252,12 @@ def handle_keyboard():
 
 
 saved_obs = []
-
 try:
 
     with mujoco.viewer.launch_passive(
         model, data, show_left_ui=False, show_right_ui=False, key_callback=key_callback
     ) as viewer:
         counter = 0
-        # reference_i = 0
         while True:
 
             step_start = time.time()
@@ -269,14 +265,10 @@ try:
             mujoco.mj_step(model, data)
 
             counter += 1
-            imitation_i += 1
-            imitation_i = imitation_i % 450
 
             if counter % decimation == 0:
-                # reference_i += 1
-                # if reference_i % len(reference_motion) == 0:
-                #     reference_i = 0
-                # reference = reference_motion[reference_i]
+                imitation_i += 1
+                imitation_i = imitation_i % 450
                 obs = get_obs(
                     data,
                     last_action,
@@ -294,7 +286,6 @@ try:
 
                 action = init_pos + action * action_scale
                 data.ctrl = action.copy()
-                # data.ctrl = reference
 
             viewer.sync()
 
