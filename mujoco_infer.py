@@ -7,7 +7,7 @@ import time
 import argparse
 
 from onnx_infer import OnnxInfer
-import json  # TMP
+from reference_motion_inference import ReferenceMotion
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-o", "--onnx_model_path", type=str, required=True)
@@ -33,6 +33,8 @@ dof_pos_scale = 1.0
 dof_vel_scale = 1.0
 action_scale = 1.0
 history_len = 0
+
+RM = ReferenceMotion("ref_motion")
 
 init_pos = np.array(
     [
@@ -191,6 +193,8 @@ def get_obs(
         gravity_history = np.roll(gravity_history, 3)
         gravity_history[:3] = gravity
 
+    ref = RM.get_closest_reference_motion(*command, imitation_i)
+
     obs = np.concatenate(
         [
             # linvel,
@@ -200,8 +204,9 @@ def get_obs(
             joint_angles - init_pos,
             joint_vel,
             last_action,
-            phase,
+            # phase,
             contacts,
+            ref,
             qpos_error_history,  # is [] if history_len == 0
             qvel_history,  # is [] if history_len == 0
             gravity_history,  # is [] if history_len == 0
@@ -261,7 +266,7 @@ try:
 
             counter += 1
             imitation_i += 1
-            imitation_i = imitation_i % num_steps_per_walk_cycle
+            imitation_i = imitation_i % 450
 
             if counter % decimation == 0:
                 # reference_i += 1

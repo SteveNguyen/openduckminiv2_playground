@@ -69,8 +69,8 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=1.5,
-              tracking_ang_vel=0.5,
+              tracking_lin_vel=0.0,
+              tracking_ang_vel=0.0,
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=0.0,
@@ -556,7 +556,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         noisy_joint_angles - self._default_pose,  # 10
         noisy_joint_vel,  # 10
         info["last_act"],  # 10
-        phase,  # 2
+        # phase,  # 2
         contact,  # 2
         info["current_reference_motion"],
         qpos_error_history,
