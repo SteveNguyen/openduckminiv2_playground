@@ -73,8 +73,8 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
         rng, key = jax.random.split(rng)
         factor = jax.random.uniform(key, shape=(10,), minval=0.9, maxval=1.1)
         current_kp = model.actuator_gainprm[:, 0]
-        kp = model.actuator_gainprm.at[:, 0].set(current_kp * factor)
-        model.actuator_biasprm.at[:, 1].set(-current_kp * factor)
+        actuator_gainprm = model.actuator_gainprm.at[:, 0].set(current_kp * factor)
+        actuator_biasprm = model.actuator_biasprm.at[:, 1].set(-current_kp * factor)
 
         return (
             geom_friction,
@@ -83,7 +83,8 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
             dof_armature,
             body_mass,
             qpos0,
-            kp
+            actuator_gainprm,
+            actuator_biasprm
         )
 
     (
@@ -93,7 +94,8 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
         armature,
         body_mass,
         qpos0,
-        kp
+        actuator_gainprm,
+        actuator_biasprm
     ) = rand_dynamics(rng)
 
     in_axes = jax.tree_util.tree_map(lambda x: None, model)
@@ -105,7 +107,8 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
             "dof_armature": 0,
             "body_mass": 0,
             "qpos0": 0,
-            "kp": 0
+            "actuator_gainprm": 0,
+            "actuator_biasprm": 0
         }
     )
 
@@ -117,7 +120,8 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
             "dof_armature": armature,
             "body_mass": body_mass,
             "qpos0": qpos0,
-            "kp": kp
+            "actuator_gainprm": actuator_gainprm,
+            "actuator_biasprm": actuator_biasprm
         }
     )
 
