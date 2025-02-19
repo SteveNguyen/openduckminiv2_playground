@@ -55,10 +55,12 @@ def default_config() -> config_dict.ConfigDict:
           level=1.0,  # Set to 0.0 to disable noise.
           action_min_delay=0,  # env steps
           action_max_delay=2,  # env steps
+          imu_min_delay=0,  # env steps
+          imu_max_delay=2,  # env steps
           scales=config_dict.create(
               hip_pos=0.03,  # rad #for each hip joint
-              kfe_pos=0.05, # kfe=Knee Pitch
-              ffe_pos=0.08, #ffe=Ankle pitch
+              kfe_pos=0.05,  # kfe=Knee Pitch
+              ffe_pos=0.08,  # ffe=Ankle pitch
               # faa_pos=0.03, #ffa=Ankle Roll #FIXME!
               joint_vel=1.5,  # rad/s # Was 1.5
               gravity=0.05,
@@ -332,10 +334,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         "push_step": 0,
         "push_interval_steps": push_interval_steps,
         # History related.
-        "qpos_error_history": jp.zeros(self._config.history_len * self._njoints),
-        "qvel_history": jp.zeros(self._config.history_len * self._njoints),
-        "gravity_history": jp.zeros(self._config.history_len * 3),
         "action_history": jp.zeros(self._config.noise_config.action_max_delay * self._njoints),
+        "imu_history": jp.zeros(self._config.noise_config.imu_max_delay * 3),
+        # imitation related
         "imitation_i": 0,
         "current_reference_motion": current_reference_motion
     }
@@ -377,7 +378,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       self.dthetas
     )
 
-    state.info["rng"], push1_rng, push2_rng, action_delay_rng = jax.random.split(
+    state.info["rng"], push1_rng, push2_rng, action_delay_rng, imu_delay_rng = jax.random.split(
         state.info["rng"], 4
     )
 
@@ -391,6 +392,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         maxval=self._config.noise_config.action_max_delay,
     )
     action_w_delay = action_history.reshape((-1, self._njoints))[action_idx[0]] # action with delay
+
+    # Handle IMU delay
 
     push_theta = jax.random.uniform(push1_rng, maxval=2 * jp.pi)
     push_magnitude = jax.random.uniform(
@@ -501,6 +504,16 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         * self._config.noise_config.scales.gravity
     )
 
+    imu_history = jp.roll(info["imu_history"], 3).at[:3].set(noisy_gravity)
+    info["imu_history"] = imu_history
+    imu_idx = jax.random.randint(
+        noise_rng, 
+        (1,),
+        minval=self._config.noise_config.imu_min_delay,
+        maxval=self._config.noise_config.imu_max_delay,
+    )
+    noisy_gravity = imu_history.reshape((-1, 3))[imu_idx[0]]
+
     joint_angles = data.qpos[7:]
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_joint_angles = (
@@ -518,23 +531,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         * self._config.noise_config.level
         * self._config.noise_config.scales.joint_vel
     )
-
-    # Update history.
-    qvel_history = jp.roll(info["qvel_history"], self._njoints).at[:self._njoints].set(noisy_joint_vel)
-    qpos_error_history = (
-        jp.roll(info["qpos_error_history"], self._njoints)
-        .at[:self._njoints]
-        .set(noisy_joint_angles - info["motor_targets"])
-    )
-    gravity_hisory = jp.roll(info["gravity_history"], 3).at[:3].set(noisy_gravity)
-
-    qvel_history = jp.nan_to_num(qvel_history)
-    qpos_error_history = jp.nan_to_num(qpos_error_history)
-    gravity_hisory = jp.nan_to_num(gravity_hisory)
-
-    info["qvel_history"] = qvel_history
-    info["qpos_error_history"] = qpos_error_history
-    info["gravity_history"] = gravity_hisory
 
     cos = jp.cos(info["phase"])
     # sin = jp.sin(info["phase"])
@@ -560,13 +556,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         info["last_act"],  # 10
         info["last_last_act"],  # 10
         info["last_last_last_act"],  # 10
-        # phase,  # 2
         contact,  # 2
         info["current_reference_motion"],
-        qpos_error_history,
-        qvel_history,
-        gravity_hisory,
-        # info["imitation_i"],
     ])
 
     accelerometer = self.get_accelerometer(data)

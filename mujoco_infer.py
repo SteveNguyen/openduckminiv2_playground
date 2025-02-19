@@ -31,8 +31,8 @@ linearVelocityScale = 1.0
 angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 1.0
-action_scale = 1.0
-history_len = 0
+action_scale = 0.8
+# history_len = 0
 
 RM = ReferenceMotion("ref_motion")
 
@@ -103,9 +103,9 @@ control_dt = model.opt.timestep * decimation
 phase_dt = 2 * np.pi * control_dt * gait_freq
 current_phase = np.array([0, np.pi])
 
-qpos_error_history = np.zeros(history_len * NUM_DOFS)
-qvel_history = np.zeros(history_len * NUM_DOFS)
-gravity_history = np.zeros(history_len * 3)
+# qpos_error_history = np.zeros(history_len * NUM_DOFS)
+# qvel_history = np.zeros(history_len * NUM_DOFS)
+# gravity_history = np.zeros(history_len * 3)
 
 imitation_i = 0
 num_steps_per_walk_cycle = int((1 / control_dt) * period)
@@ -169,7 +169,7 @@ def get_feet_contacts():
 phases = []
 
 def get_obs(
-    data, last_action, command, qvel_history, qpos_error_history, gravity_history
+    data, last_action, command  # , qvel_history, qpos_error_history, gravity_history
 ):
 
     gyro = get_gyro(data)
@@ -182,17 +182,17 @@ def get_obs(
     # phases.append(phase)
 
 
-    if history_len > 0:
-        qvel_history = np.roll(qvel_history, NUM_DOFS)
-        qvel_history[:NUM_DOFS] = joint_vel
+    # if history_len > 0:
+    #     qvel_history = np.roll(qvel_history, NUM_DOFS)
+    #     qvel_history[:NUM_DOFS] = joint_vel
 
-        last_motor_target = init_pos + last_action * action_scale
-        qpos_error = joint_angles - last_motor_target
-        qpos_error_history = np.roll(qpos_error_history, NUM_DOFS)
-        qpos_error_history[:NUM_DOFS] = qpos_error
+    #     last_motor_target = init_pos + last_action * action_scale
+    #     qpos_error = joint_angles - last_motor_target
+    #     qpos_error_history = np.roll(qpos_error_history, NUM_DOFS)
+    #     qpos_error_history[:NUM_DOFS] = qpos_error
 
-        gravity_history = np.roll(gravity_history, 3)
-        gravity_history[:3] = gravity
+    #     gravity_history = np.roll(gravity_history, 3)
+    #     gravity_history[:3] = gravity
 
     ref = RM.get_closest_reference_motion(*command, imitation_i)
 
@@ -210,9 +210,9 @@ def get_obs(
             # phase,
             contacts,
             ref,
-            qpos_error_history,  # is [] if history_len == 0
-            qvel_history,  # is [] if history_len == 0
-            gravity_history,  # is [] if history_len == 0
+            # qpos_error_history,  # is [] if history_len == 0
+            # qvel_history,  # is [] if history_len == 0
+            # gravity_history,  # is [] if history_len == 0
         ]
     )
 
@@ -253,7 +253,8 @@ def handle_keyboard():
 
 saved_obs = []
 try:
-
+    # model.actuator_gainprm[:, 0] = 4
+    # mujoco.mj_forward(model, data) 
     with mujoco.viewer.launch_passive(
         model, data, show_left_ui=False, show_right_ui=False, key_callback=key_callback
     ) as viewer:
@@ -264,6 +265,7 @@ try:
 
             mujoco.mj_step(model, data)
 
+
             counter += 1
 
             if counter % decimation == 0:
@@ -273,9 +275,9 @@ try:
                     data,
                     last_action,
                     commands,
-                    qvel_history,
-                    qpos_error_history,
-                    gravity_history,
+                    # qvel_history,
+                    # qpos_error_history,
+                    # gravity_history,
                 )
                 saved_obs.append(obs)
                 action = policy.infer(obs)
