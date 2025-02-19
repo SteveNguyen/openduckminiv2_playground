@@ -90,7 +90,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_height=0.0,
               feet_phase=0.0,
               # Other rewards.
-              stand_still=-50.0,
+              stand_still=-10.0,
               alive=20.0,
               termination=0.0,
               imitation=1.0,
