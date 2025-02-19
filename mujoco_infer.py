@@ -254,7 +254,8 @@ def handle_keyboard():
 saved_obs = []
 try:
     # model.actuator_gainprm[:, 0] = 4
-    # mujoco.mj_forward(model, data) 
+    # model.actuator_biasprm[:, 1] = -4
+    mujoco.mj_forward(model, data) 
     with mujoco.viewer.launch_passive(
         model, data, show_left_ui=False, show_right_ui=False, key_callback=key_callback
     ) as viewer:
