@@ -378,7 +378,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       self.dthetas
     )
 
-    state.info["rng"], push1_rng, push2_rng, action_delay_rng, imu_delay_rng = jax.random.split(
+    state.info["rng"], push1_rng, push2_rng, action_delay_rng = jax.random.split(
         state.info["rng"], 4
     )
 
@@ -392,8 +392,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         maxval=self._config.noise_config.action_max_delay,
     )
     action_w_delay = action_history.reshape((-1, self._njoints))[action_idx[0]] # action with delay
-
-    # Handle IMU delay
 
     push_theta = jax.random.uniform(push1_rng, maxval=2 * jp.pi)
     push_magnitude = jax.random.uniform(
@@ -504,6 +502,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         * self._config.noise_config.scales.gravity
     )
 
+    # Handle IMU delay
     imu_history = jp.roll(info["imu_history"], 3).at[:3].set(noisy_gravity)
     info["imu_history"] = imu_history
     imu_idx = jax.random.randint(
