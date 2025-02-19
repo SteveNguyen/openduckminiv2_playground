@@ -32,7 +32,7 @@ uv run tensorboard --logdir=<yourlogdir>
 Infer mujoco
 
 ```bash
-uv run mujoco_infer <path_to_.onnx> (-k)
+uv run mujoco_infer.py -o <path_to_.onnx> (-k)
 ```
 
 # MISC
