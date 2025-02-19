@@ -72,8 +72,9 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
         # # Randomize KP
         rng, key = jax.random.split(rng)
         factor = jax.random.uniform(key, shape=(10,), minval=0.9, maxval=1.1)
-        kp = model.actuator_gainprm.at[:, 0].set(model.actuator_gainprm[:, 0] * factor)
-        model.actuator_biasprm.at[:, 1].set(-kp)
+        current_kp = model.actuator_gainprm[:, 0]
+        kp = model.actuator_gainprm.at[:, 0].set(current_kp * factor)
+        model.actuator_biasprm.at[:, 1].set(-current_kp * factor)
 
         return (
             geom_friction,
