@@ -31,7 +31,7 @@ linearVelocityScale = 1.0
 angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 1.0
-action_scale = 1.0
+action_scale = 0.75
 # history_len = 0
 
 RM = ReferenceMotion("ref_motion")
@@ -203,7 +203,7 @@ def get_obs(
             gravity,
             command,
             joint_angles - init_pos,
-            joint_vel,
+            joint_vel * 0.05,
             last_action,
             last_last_action,
             last_last_last_action,

@@ -49,7 +49,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=450,
       action_repeat=1,
-      action_scale=0.5,
+      action_scale=0.75,
       history_len=0,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
@@ -82,7 +82,7 @@ def default_config() -> config_dict.ConfigDict:
               base_y_swing=0.0,
               # Energy related rewards.
               torques=-1.0e-3,
-              action_rate=-0.75,
+              action_rate=-1.125,  # was -1.5
               energy=0.0,
               # Feet related rewards.
               feet_clearance=0.0,
@@ -161,7 +161,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     ) = process_reference_motion(os.getcwd()+"/ref_motion")
     # self.nb_frames_in_one_walk_cycle = int((1/self._config.ctrl_dt) * self.period)
-    self.nb_frames_in_reference_motion = 450 # TODO extract this from the reference motion data
+    self.nb_frames_in_reference_motion = 450  # TODO extract this from the reference motion data
 
     # Note: First joint is freejoint.
     # get the range of the joints
@@ -552,7 +552,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         noisy_gravity,  # 3
         info["command"],  # 3
         noisy_joint_angles - self._default_pose,  # 10
-        noisy_joint_vel,  # 10
+        noisy_joint_vel * 0.05,  # 10
         info["last_act"],  # 10
         info["last_last_act"],  # 10
         info["last_last_last_act"],  # 10
