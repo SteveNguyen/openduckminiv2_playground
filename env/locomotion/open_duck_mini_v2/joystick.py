@@ -49,7 +49,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=450,
       action_repeat=1,
-      action_scale=1.0,
+      action_scale=0.5,
       history_len=0,
       soft_joint_pos_limit_factor=0.95,
       noise_config=config_dict.create(
@@ -82,7 +82,7 @@ def default_config() -> config_dict.ConfigDict:
               base_y_swing=0.0,
               # Energy related rewards.
               torques=-1.0e-3,
-              action_rate=-1.5,
+              action_rate=-0.75,
               energy=0.0,
               # Feet related rewards.
               feet_clearance=0.0,
