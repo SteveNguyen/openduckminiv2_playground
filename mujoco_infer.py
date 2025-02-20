@@ -255,7 +255,7 @@ saved_obs = []
 try:
     # model.actuator_gainprm[:, 0] = 4
     # model.actuator_biasprm[:, 1] = -4
-    mujoco.mj_forward(model, data) 
+    # mujoco.mj_forward(model, data) 
     with mujoco.viewer.launch_passive(
         model, data, show_left_ui=False, show_right_ui=False, key_callback=key_callback
     ) as viewer:
@@ -282,6 +282,7 @@ try:
                 )
                 saved_obs.append(obs)
                 action = policy.infer(obs)
+                # action = np.clip(action, -1, 1)
 
                 last_last_last_action = last_last_action.copy()
                 last_last_action = last_action.copy()

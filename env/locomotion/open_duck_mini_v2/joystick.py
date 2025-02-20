@@ -62,7 +62,7 @@ def default_config() -> config_dict.ConfigDict:
               kfe_pos=0.05,  # kfe=Knee Pitch
               ffe_pos=0.08,  # ffe=Ankle pitch
               # faa_pos=0.03, #ffa=Ankle Roll #FIXME!
-              joint_vel=1.5,  # rad/s # Was 1.5
+              joint_vel=2.5,  # rad/s # Was 1.5
               gravity=0.05,
               linvel=0.1,
               gyro=0.1,  # angvel. # was 0.2
