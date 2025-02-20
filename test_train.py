@@ -10,6 +10,7 @@ import functools
 
 import matplotlib.pyplot as plt
 
+from pathlib import Path
 
 from datetime import datetime
 import os
@@ -132,9 +133,7 @@ print("ENVIRONEMENT LOADED")
 x_data, y_data, y_dataerr = [], [], []
 times = [datetime.now()]
 
-ckpt_path = epath.Path(
-    "/home/apirrone/MISC/openduckminiv2_playground/openduckminiv2_playground/ckpts"
-)
+ckpt_path = Path.cwd() / "ckpts"
 ckpt_path.mkdir(parents=True, exist_ok=True)
 writer = SummaryWriter(log_dir=ckpt_path)
 
