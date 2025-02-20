@@ -103,11 +103,11 @@
     <geom contype="0" conaffinity="0"/>
     <!-- <geom contype="0" conaffinity="1"/> -->
 
-    <joint damping="0.6" frictionloss="0.08" armature="0.028"/>
+    <joint damping="0.754" frictionloss="0.08" armature="0.041"/>
     <!-- <position kp="6.55" kv="0.0" forcerange="-3.57 3.57"/> -->
     <!-- 6.55 is equivalent to 32 firmware kp, 4.0 is equivalent to 20 firmware kp -->
     <!-- <position kp="4.0" kv="0.0" forcerange="-3.57 3.57"/>  -->
-    <position kp="6.52" kv="0.0" forcerange="-3.56 3.56"/> 
+    <position kp="8.17" kv="0.0" forcerange="-4.457 -4.457"/> 
     <!-- <position kp="8" kv="0.0" forcerange="-4 4"/>  -->
   </default>
   <contact>
