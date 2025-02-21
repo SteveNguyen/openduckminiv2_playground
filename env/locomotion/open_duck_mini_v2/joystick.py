@@ -160,7 +160,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       # self.left_toe_pos_slice,
       # self.right_toe_pos_slice
 
-    ) = process_reference_motion(os.getcwd()+"/ref_motion_higher_foot")
+    ) = process_reference_motion(os.getcwd()+"/ref_motion")
     # self.nb_frames_in_one_walk_cycle = int((1/self._config.ctrl_dt) * self.period)
     self.nb_frames_in_reference_motion = 450  # TODO extract this from the reference motion data
 
