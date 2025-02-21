@@ -92,7 +92,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_height=0.0,
               feet_phase=0.0,
               # Other rewards.
-              stand_still=0.0,
+              stand_still=-1.0,
               alive=20.0,
               termination=0.0,
               imitation=1.0,
@@ -781,6 +781,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
   ) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
+    cmd_norm = jp.linalg.norm(cmd)
+    if cmd_norm < 0.01:
+      return np.nan_to_num(0.0)
 
     w_torso_pos = 1.0
     w_torso_orientation = 1.0
@@ -981,7 +984,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     # With 10% chance, set everything to zero.
     return jp.where(
-        jax.random.bernoulli(rng4, p=0.0), # changed to 0% chance to debug TODO add back when adding stand still reward
+        jax.random.bernoulli(rng4, p=0.1),
         jp.zeros(3),
         jp.hstack([lin_vel_x, lin_vel_y, ang_vel_yaw]),
     )
