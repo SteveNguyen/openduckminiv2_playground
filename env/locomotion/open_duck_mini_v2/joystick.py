@@ -67,7 +67,7 @@ def default_config() -> config_dict.ConfigDict:
               joint_vel=2.5,  # rad/s # Was 1.5
               gravity=0.05,
               linvel=0.1,
-              gyro=0.1,  # angvel. # was 0.2
+              gyro=0.2,  # angvel. # was 0.2
           ),
       ),
       reward_config=config_dict.create(
