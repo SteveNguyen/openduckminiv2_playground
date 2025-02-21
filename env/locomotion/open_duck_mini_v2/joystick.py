@@ -782,8 +782,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   ) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
     cmd_norm = jp.linalg.norm(cmd)
-    if cmd_norm < 0.01:
-      return np.nan_to_num(0.0)
 
     w_torso_pos = 1.0
     w_torso_orientation = 1.0
@@ -867,7 +865,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     contact_rew = jp.sum(contacts == ref_foot_contacts) * w_contact
 
     reward = torso_pos_rew + torso_orientation_rew +  lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
-
+    reward *= (cmd_norm > 0.01)  # No reward for zero commands.
     return jp.nan_to_num(reward)
 
 
