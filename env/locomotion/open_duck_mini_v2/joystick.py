@@ -864,8 +864,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     # reward
     torso_pos_rew = jp.exp(-200.0 * jp.sum(jp.square(base_pos[:2] - ref_base_pos[:2]))) * w_torso_pos
 
-    torso_orientation_rew = jp.exp(-20 * self.quaternion_angle(base_orientation, ref_base_orientation_quat)) * w_torso_orientation
-    # torso_orientation_rew = jp.exp(-20.0 * jp.sum(jp.square(base_orientation - ref_base_orientation_quat))) * w_torso_orientation
+    # real quaternion angle doesn't have the expected  effect, switching back for now
+    # torso_orientation_rew = jp.exp(-20 * self.quaternion_angle(base_orientation, ref_base_orientation_quat)) * w_torso_orientation
+    torso_orientation_rew = jp.exp(-20.0 * jp.sum(jp.square(base_orientation - ref_base_orientation_quat))) * w_torso_orientation
 
     lin_vel_xy_rew = jp.exp(-8.0 * jp.sum(jp.square(base_lin_vel[:2] - ref_base_lin_vel[:2]))) * w_lin_vel_xy
     lin_vel_z_rew = jp.exp(-8.0 * jp.sum(jp.square(base_lin_vel[2] - ref_base_lin_vel[2]))) * w_lin_vel_z
