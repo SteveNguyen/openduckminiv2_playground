@@ -34,7 +34,7 @@ dof_vel_scale = 0.05
 action_scale = 0.5
 # history_len = 0
 
-RM = ReferenceMotion("ref_motion_higher_foot")
+RM = ReferenceMotion("new_ref_motion")
 
 init_pos = np.array(
     [
