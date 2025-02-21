@@ -765,8 +765,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     vel_cost = jp.sum(jp.abs(qvel))
     return jp.nan_to_num(pose_cost + vel_cost) * (cmd_norm < 0.01)
 
-    # return jp.nan_to_num(jp.sum(jp.abs(qpos - self._default_pose)) * (cmd_norm < 0.01))
-
   def _cost_termination(self, done: jax.Array) -> jax.Array:
     return done
 
