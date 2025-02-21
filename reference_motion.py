@@ -32,9 +32,10 @@ def process_reference_motion(directory):
 
         name = os.path.basename(file).strip(".json")
         split = name.split("_")
-        dx = float(split[0])
-        dy = float(split[1])
-        dtheta = float(split[2])
+        id = float(split[0])
+        dx = float(split[1])
+        dy = float(split[2])
+        dtheta = float(split[3])
 
         if dx not in dxs:
             dxs.append(dx)
