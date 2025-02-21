@@ -653,7 +653,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
           # self.left_toe_pos_slice,
           # self.right_toe_pos_slice,
         ),
-        "stand_still": self._cost_stand_still(info["command"], data.qpos[7:]),
+        "stand_still": self._cost_stand_still(info["command"], data.qpos[7:], data.qvel[6:]),
         # Pose related rewards.
         "joint_deviation_hip": self._cost_joint_deviation_hip(
             data.qpos[7:], info["command"]
@@ -758,9 +758,14 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
       self,
       commands: jax.Array,
       qpos: jax.Array,
+      qvel: jax.Array,
   ) -> jax.Array:
     cmd_norm = jp.linalg.norm(commands)
-    return jp.nan_to_num(jp.sum(jp.abs(qpos - self._default_pose)) * (cmd_norm < 0.01))
+    pose_cost = jp.sum(jp.abs(qpos - self._default_pose))
+    vel_cost = jp.sum(jp.abs(qvel))
+    return jp.nan_to_num(pose_cost + vel_cost) * (cmd_norm < 0.01)
+
+    # return jp.nan_to_num(jp.sum(jp.abs(qpos - self._default_pose)) * (cmd_norm < 0.01))
 
   def _cost_termination(self, done: jax.Array) -> jax.Array:
     return done
