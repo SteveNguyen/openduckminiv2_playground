@@ -33,18 +33,7 @@ from . import open_duck_mini_v2_constants as consts
 from . import base as open_duck_mini_v2_base
 from reference_motion import process_reference_motion, get_closest_reference_motion
 from poly_reference_motion import PolyReferenceMotion
-# from jax import config
 
-# config.update("jax_enable_x64", True)
-
-
-
-
-
-# TO TRY : 
-# - reduce action_scale
-# - curriculum training (less push, less noise, less delay, only forward at start etc)
-# https://chatgpt.com/share/67b0df9c-6a68-8011-8f04-a72fae95ba63
 
 
 def default_config() -> config_dict.ConfigDict:
@@ -99,7 +88,7 @@ def default_config() -> config_dict.ConfigDict:
               stand_still=-0.1,  # was -1.0 TODO try to relax this a bit ?
               alive=20.0,
               termination=0.0,
-              imitation=0.1,
+              imitation=0.2,
               # Pose related rewards.
               joint_deviation_knee=0.0,  # -0.1
               joint_deviation_hip=0.0,  # -0.25
