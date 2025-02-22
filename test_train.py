@@ -165,7 +165,7 @@ if "network_factory" in ppo_params:
         ppo_networks.make_ppo_networks, **ppo_params.network_factory
     )
 print(f"PPO PARAMS: {ppo_training_params}")
-# ppo_training_params["num_timesteps"] = 500000000
+ppo_training_params["num_timesteps"] = 500000000
 
 
 def policy_params_fn(current_step, make_policy, params):
