@@ -88,7 +88,7 @@ def default_config() -> config_dict.ConfigDict:
               # Feet related rewards.
               feet_clearance=0.0,
               feet_air_time=0.0,
-              feet_slip=0.0,
+              feet_slip=-0.5,
               feet_height=0.0,
               feet_phase=0.0,
               # Other rewards.
