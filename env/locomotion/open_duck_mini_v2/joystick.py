@@ -82,7 +82,7 @@ def default_config() -> config_dict.ConfigDict:
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=0.0,
-              orientation=0.0,
+              orientation=-0.5,
               base_height=0.0,
               base_y_swing=0.0,
               # Energy related rewards.
@@ -93,13 +93,13 @@ def default_config() -> config_dict.ConfigDict:
               feet_clearance=0.0,
               feet_air_time=0.0,
               feet_slip=0.0,
-              feet_height=0.0,
+              feet_height=-0.5,
               # feet_phase=0.0,
               # Other rewards.
-              stand_still=-0.7,  # was -1.0 TODO try to relax this a bit ?
+              stand_still=-0.5,  # was -1.0 TODO try to relax this a bit ?
               alive=20.0,
               termination=0.0,
-              imitation=1.0,
+              imitation=0.5,
               # Pose related rewards.
               joint_deviation_knee=0.0,  # -0.1
               joint_deviation_hip=0.0,  # -0.25
