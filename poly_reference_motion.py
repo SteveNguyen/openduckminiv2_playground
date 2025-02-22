@@ -1,7 +1,53 @@
 import json
 import jax.numpy as jp
 from jax import vmap
+from jax import config
 
+config.update("jax_enable_x64", True)
+
+
+# dimensions_names = [
+#     0  "pos left_hip_yaw",
+#     1  "pos left_hip_roll",
+#     2  "pos left_hip_pitch",
+#     3  "pos left_knee",
+#     4  "pos left_ankle",
+#     5  "pos neck_pitch",
+#     6  "pos head_pitch",
+#     7  "pos head_yaw",
+#     8  "pos head_roll",
+#     9  "pos left_antenna",
+#     10 "pos right_antenna",
+#     11 "pos right_hip_yaw",
+#     12 "pos right_hip_roll",
+#     13 "pos right_hip_pitch",
+#     14 "pos right_knee",
+#     15 "pos right_ankle",
+#     16 "vel left_hip_yaw",
+#     17 "vel left_hip_roll",
+#     18 "vel left_hip_pitch",
+#     19 "vel left_knee",
+#     20 "vel left_ankle",
+#     21 "vel neck_pitch",
+#     22 "vel head_pitch",
+#     23 "vel head_yaw",
+#     24 "vel head_roll",
+#     25 "vel left_antenna",
+#     26 "vel right_antenna",
+#     27 "vel right_hip_yaw",
+#     28 "vel right_hip_roll",
+#     29 "vel right_hip_pitch",
+#     30 "vel right_knee",
+#     31 "vel right_ankle",
+#     32 "foot_contacts left",
+#     33 "foot_contacts right",
+#     34 "base_linear_vel x",
+#     35 "base_linear_vel y",
+#     36 "base_linear_vel z",
+#     37 "base_angular_vel x",
+#     38 "base_angular_vel y",
+#     39 "base_angular_vel z",
+# ]
 
 class PolyReferenceMotion:
     def __init__(self, polynomial_coefficients: str):
@@ -70,7 +116,7 @@ class PolyReferenceMotion:
 
             coeffs = []
             for k, v in _coeffs.items():
-                coeffs.append(v)
+                coeffs.append(jp.flip(jp.array(v, dtype=jp.float64)))
             _data[dx][dy][dtheta] = coeffs
 
         self.dxs = sorted(self.dxs)
@@ -87,7 +133,11 @@ class PolyReferenceMotion:
             for y, dy in enumerate(self.dys):
                 self.data_array[x][y] = nb_dtheta * [None]
                 for th, dtheta in enumerate(self.dthetas):
-                    self.data_array[x][y][th] = jp.array(_data[dx][dy][dtheta])
+                    self.data_array[x][y][th] = jp.array(
+                        _data[dx][dy][dtheta], dtype=jp.float64
+                    )
+
+        self.data_array = jp.array(self.data_array, dtype=jp.float64)
 
         print("[Poly ref data] Done processing")
 
@@ -104,30 +154,30 @@ class PolyReferenceMotion:
         return ix, iy, itheta
 
     def sample_polynomial(self, t, coeffs):
-        return vmap(lambda c: jp.polyval(jp.flip(c), t))(coeffs)
+        return vmap(lambda c: jp.polyval(c, t))(coeffs)
 
     def get_reference_motion(self, dx, dy, dtheta, i):
         ix, iy, itheta = self.vel_to_index(dx, dy, dtheta)
         t = i % self.nb_steps_in_period / self.nb_steps_in_period
-        t = jp.clip(t, 0.0, 1.0)
+        t = jp.clip(t, 0.0, 1.0)  # safeguard
         ret = self.sample_polynomial(t, self.data_array[ix][iy][itheta])
         return ret
 
 
-PRM = PolyReferenceMotion(
-    "/home/antoine/MISC/Open_Duck_reference_motion_generator/polynomial_coefficients.json"
-)
-vals = []
-select_dim = -1
-for i in range(PRM.nb_steps_in_period*2):
-    print(i)
-    vals.append(PRM.get_reference_motion(0.0, -0.05, -0.3, i)[select_dim])
+if __name__ == "__main__":
 
-# plot
-import matplotlib.pyplot as plt
-import numpy as np
+    PRM = PolyReferenceMotion(
+        "/home/antoine/MISC/Open_Duck_reference_motion_generator/polynomial_coefficients.json"
+    )
+    vals = []
+    select_dim = -1
+    for i in range(PRM.nb_steps_in_period):
+        vals.append(PRM.get_reference_motion(0.0, -0.05, -0.1, i)[select_dim])
 
+    # plot
+    import matplotlib.pyplot as plt
+    import numpy as np
 
-ts = np.arange(0, PRM.nb_steps_in_period*2)
-plt.plot(ts, vals)
-plt.show()
+    ts = np.arange(0, PRM.nb_steps_in_period)
+    plt.plot(ts, vals)
+    plt.show()

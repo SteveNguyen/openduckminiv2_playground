@@ -7,7 +7,8 @@ import time
 import argparse
 
 from onnx_infer import OnnxInfer
-from reference_motion_inference import ReferenceMotion
+# from reference_motion_inference import ReferenceMotion
+from poly_reference_motion import PolyReferenceMotion
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-o", "--onnx_model_path", type=str, required=True)
@@ -34,7 +35,8 @@ dof_vel_scale = 0.05
 action_scale = 1.0
 # history_len = 0
 
-RM = ReferenceMotion("new_ref_motion")
+# RM = ReferenceMotion("new_ref_motion")
+PRM = PolyReferenceMotion("polynomial_coefficients.json")
 
 init_pos = np.array(
     [
@@ -148,7 +150,8 @@ def get_obs(
 
     contacts = get_feet_contacts()
 
-    ref = RM.get_closest_reference_motion(*command, imitation_i)
+    ref = PRM.get_reference_motion(*command, imitation_i)
+    # ref = RM.get_closest_reference_motion(*command, imitation_i)
 
     obs = np.concatenate(
         [
