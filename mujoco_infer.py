@@ -218,7 +218,7 @@ try:
 
             if counter % decimation == 0:
                 imitation_i += 1
-                imitation_i = imitation_i % 450
+                imitation_i = imitation_i % PRM.nb_steps_in_period
                 obs = get_obs(
                     data,
                     last_action,
