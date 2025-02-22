@@ -49,7 +49,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=450,
       action_repeat=1,
-      action_scale=0.5,
+      action_scale=1.0,
       dof_vel_scale=0.05,
       history_len=0,
       soft_joint_pos_limit_factor=0.95,
@@ -88,7 +88,7 @@ def default_config() -> config_dict.ConfigDict:
               # Feet related rewards.
               feet_clearance=0.0,
               feet_air_time=0.0,
-              feet_slip=-0.5,
+              feet_slip=0.0,
               feet_height=0.0,
               feet_phase=0.0,
               # Other rewards.
