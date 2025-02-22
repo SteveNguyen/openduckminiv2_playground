@@ -1,9 +1,9 @@
 import json
 import jax.numpy as jp
 from jax import vmap
-from jax import config
+# from jax import config
 
-config.update("jax_enable_x64", True)
+# config.update("jax_enable_x64", True)
 
 
 # dimensions_names = [
@@ -116,7 +116,7 @@ class PolyReferenceMotion:
 
             coeffs = []
             for k, v in _coeffs.items():
-                coeffs.append(jp.flip(jp.array(v, dtype=jp.float64)))
+                coeffs.append(jp.flip(jp.array(v)))
             _data[dx][dy][dtheta] = coeffs
 
         self.dxs = sorted(self.dxs)
@@ -133,11 +133,9 @@ class PolyReferenceMotion:
             for y, dy in enumerate(self.dys):
                 self.data_array[x][y] = nb_dtheta * [None]
                 for th, dtheta in enumerate(self.dthetas):
-                    self.data_array[x][y][th] = jp.array(
-                        _data[dx][dy][dtheta], dtype=jp.float64
-                    )
+                    self.data_array[x][y][th] = jp.array(_data[dx][dy][dtheta])
 
-        self.data_array = jp.array(self.data_array, dtype=jp.float64)
+        self.data_array = jp.array(self.data_array)
 
         print("[Poly ref data] Done processing")
 

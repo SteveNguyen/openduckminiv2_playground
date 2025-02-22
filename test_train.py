@@ -27,9 +27,10 @@ from mujoco_playground.config import locomotion_params
 
 from jax import config as jaxconfig
 from tensorboardX import SummaryWriter
-from jax import config
 
-config.update("jax_enable_x64", True)
+# from jax import config
+
+# config.update("jax_enable_x64", True)
 
 # ON CPU?
 # jax.config.update('jax_default_device', jax.devices('cpu')[0])

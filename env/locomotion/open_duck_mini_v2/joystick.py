@@ -33,9 +33,9 @@ from . import open_duck_mini_v2_constants as consts
 from . import base as open_duck_mini_v2_base
 from reference_motion import process_reference_motion, get_closest_reference_motion
 from poly_reference_motion import PolyReferenceMotion
-from jax import config
+# from jax import config
 
-config.update("jax_enable_x64", True)
+# config.update("jax_enable_x64", True)
 
 
 
