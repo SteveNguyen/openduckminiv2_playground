@@ -168,7 +168,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
     # ) = process_reference_motion(os.getcwd()+"/new_ref_motion")
     # self.nb_frames_in_one_walk_cycle = int((1/self._config.ctrl_dt) * self.period)
-    self.nb_frames_in_reference_motion = 450  # TODO extract this from the reference motion data
 
     # Note: First joint is freejoint.
     # get the range of the joints
@@ -370,13 +369,13 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
 
     state.info["imitation_i"] += 1
-    state.info["imitation_i"] = state.info["imitation_i"] % self.nb_frames_in_reference_motion
+    state.info["imitation_i"] = state.info["imitation_i"] % self.PRM.nb_steps_in_period # not critical, is already moduloed in get_reference_motion
     # state.info["imitation_i"] = state.info["imitation_i"] % self.nb_frames_in_one_walk_cycle
 
     state.info["current_reference_motion"] = self.PRM.get_reference_motion(
-      state.info["command"][0], 
-      state.info["command"][1], 
-      state.info["command"][2], 
+      state.info["command"][0],
+      state.info["command"][1],
+      state.info["command"][2],
       state.info["imitation_i"]
     )
     # state.info["current_reference_motion"] = get_closest_reference_motion(
@@ -822,7 +821,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     linear_vel_slice_end = 37
 
     angular_vel_slice_start = 37
-    angular_vel_slice_end = 40  
+    angular_vel_slice_end = 40
 
     joint_pos_slice_start = 0
     joint_pos_slice_end = 16
@@ -893,10 +892,13 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     joint_vel_rew = -jp.sum(jp.square(joint_vel - ref_joint_vels)) * w_joint_vel
 
     # TODO the ref contact can oscillate a bit around 0 or 1, maybe we should add a threshold
+    # threshold ref_foot_contacts to 1 of > 0.5 and 0 otherwise
+    ref_foot_contacts = jp.where(ref_foot_contacts > 0.5, jp.ones_like(ref_foot_contacts), jp.zeros_like(ref_foot_contacts))
     contact_rew = jp.sum(contacts == ref_foot_contacts) * w_contact
 
     # reward = torso_pos_rew + torso_orientation_rew +  lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
-    reward = lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
+    # reward = lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
+    reward = joint_pos_rew + joint_vel_rew + contact_rew # trying without the lin and ang vel because they can compete with the tracking rewards
     reward *= (cmd_norm > 0.01)  # No reward for zero commands.
     return jp.nan_to_num(reward)
 

@@ -23,6 +23,7 @@ from jax import vmap
 #     13 "pos right_hip_pitch",
 #     14 "pos right_knee",
 #     15 "pos right_ankle",
+
 #     16 "vel left_hip_yaw",
 #     17 "vel left_hip_roll",
 #     18 "vel left_hip_pitch",
@@ -39,11 +40,14 @@ from jax import vmap
 #     29 "vel right_hip_pitch",
 #     30 "vel right_knee",
 #     31 "vel right_ankle",
+
 #     32 "foot_contacts left",
 #     33 "foot_contacts right",
+
 #     34 "base_linear_vel x",
 #     35 "base_linear_vel y",
 #     36 "base_linear_vel z",
+
 #     37 "base_angular_vel x",
 #     38 "base_angular_vel y",
 #     39 "base_angular_vel z",
