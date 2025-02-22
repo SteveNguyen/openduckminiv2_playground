@@ -41,7 +41,7 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
         # Scale armature: *U(1.0, 1.05).
         rng, key = jax.random.split(rng)
         armature = model.dof_armature[6:] * jax.random.uniform(
-            key, shape=(10,), minval=0.9, maxval=1.1 # was 1.0, 1.05
+            key, shape=(10,), minval=0.9, maxval=1.1  # was 1.0, 1.05
         )
         dof_armature = model.dof_armature.at[6:].set(armature)
 
