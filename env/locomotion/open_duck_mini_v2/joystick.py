@@ -85,7 +85,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_height=0.0,
               # feet_phase=0.0,
               # Other rewards.
-              stand_still=0.0,  # was -1.0 TODO try to relax this a bit ?
+              stand_still=-0.1,  # was -1.0 TODO try to relax this a bit ?
               alive=20.0,
               termination=0.0,
               imitation=1.0,
@@ -876,7 +876,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     # reward = torso_pos_rew + torso_orientation_rew +  lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
     # reward = lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
     reward = joint_pos_rew + joint_vel_rew + contact_rew # trying without the lin and ang vel because they can compete with the tracking rewards
-    # reward *= (cmd_norm > 0.01)  # No reward for zero commands.
+    reward *= (cmd_norm > 0.01)  # No reward for zero commands.
     return jp.nan_to_num(reward)
 
 
