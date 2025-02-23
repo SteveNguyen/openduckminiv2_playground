@@ -34,6 +34,7 @@ model.opt.gravity[:] = 0  # Disable gravity
 
 
 counter = 0
+imitation_i= 0
 with mujoco.viewer.launch_passive(
     model, data, show_left_ui=False, show_right_ui=False
 ) as viewer:
@@ -43,7 +44,8 @@ with mujoco.viewer.launch_passive(
         mujoco.mj_step(model, data)
 
         if counter % decimation == 0:
-            ref = PRM.get_reference_motion(0.1, 0, 0, counter // decimation)
+            imitation_i += 1
+            ref = PRM.get_reference_motion(0.1, 0, 0, imitation_i)
             ref_joints_pos = ref[0:16]
             ref_joints_pos = np.concatenate(
                 [ref_joints_pos[:5], ref_joints_pos[11:]]
