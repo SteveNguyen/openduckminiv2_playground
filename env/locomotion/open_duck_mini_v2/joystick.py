@@ -66,8 +66,8 @@ def default_config() -> config_dict.ConfigDict:
       reward_config=config_dict.create(
           scales=config_dict.create(
               # Tracking related rewards.
-              tracking_lin_vel=1.5,
-              tracking_ang_vel=0.5,
+              tracking_lin_vel=2.5,
+              tracking_ang_vel=1.5,
               # Base related rewards.
               lin_vel_z=0.0,
               ang_vel_xy=0.0,
@@ -82,13 +82,13 @@ def default_config() -> config_dict.ConfigDict:
               feet_clearance=0.0,
               feet_air_time=0.0,
               feet_slip=0.0,
-              feet_height=-0.5,
+              feet_height=0.0,
               # feet_phase=0.0,
               # Other rewards.
-              stand_still=-0.1,  # was -1.0 TODO try to relax this a bit ?
+              stand_still=0.0,  # was -1.0 TODO try to relax this a bit ?
               alive=20.0,
               termination=0.0,
-              imitation=0.2,
+              imitation=1.0,
               # Pose related rewards.
               joint_deviation_knee=0.0,  # -0.1
               joint_deviation_hip=0.0,  # -0.25
@@ -647,12 +647,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
           contact,
           info["current_reference_motion"],
           info["command"],
-          # self.linear_vel_slice,
-          # self.angular_vel_slice,
-          # self.joint_pos_slice,
-          # self.joint_vels_slice,
-          # self.left_toe_pos_slice,
-          # self.right_toe_pos_slice,
         ),
         "stand_still": self._cost_stand_still(info["command"], data.qpos[7:], data.qvel[6:]),
         # Pose related rewards.
@@ -783,12 +777,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     contacts: jax.Array,
     reference_frame: jax.Array,
     cmd: jax.Array,
-    # linear_vel_slice: jax.Array,
-    # angular_vel_slice: jax.Array,
-    # joint_pos_slice: jax.Array,
-    # joint_vels_slice: jax.Array,
-    # left_toe_pos_slice: jax.Array,
-    # right_toe_pos_slice: jax.Array
 
   ) -> jax.Array:
     # TODO don't reward for moving when the command is zero.
@@ -888,7 +876,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     # reward = torso_pos_rew + torso_orientation_rew +  lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
     # reward = lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
     reward = joint_pos_rew + joint_vel_rew + contact_rew # trying without the lin and ang vel because they can compete with the tracking rewards
-    reward *= (cmd_norm > 0.01)  # No reward for zero commands.
+    # reward *= (cmd_norm > 0.01)  # No reward for zero commands.
     return jp.nan_to_num(reward)
 
 
