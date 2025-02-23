@@ -31,8 +31,10 @@ from mujoco_playground._src.collision import geoms_colliding
 
 from . import open_duck_mini_v2_constants as consts
 from . import base as open_duck_mini_v2_base
-from reference_motion import process_reference_motion, get_closest_reference_motion
 from poly_reference_motion import PolyReferenceMotion
+
+# if set to false, won't require the reference data to be present and won't compute the reference motions polynoms for nothing
+USE_IMITATION_REWARD = True
 
 
 
@@ -134,29 +136,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
     self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
 
-    self.PRM = PolyReferenceMotion("polynomial_coefficients.json")
-
-    # ( 
-    #   self.reference_data_array,
-    #   self.dx_range,
-    #   self.dy_range,
-    #   self.dtheta_range,
-    #   self.dxs,
-    #   self.dys,
-    #   self.dthetas,
-    #   self.ref_motion_fps,
-    #   self.period,
-    #   # self.root_pos_slice,
-    #   # self.root_quat_slice,
-    #   # self.linear_vel_slice,
-    #   # self.angular_vel_slice,
-    #   # self.joint_pos_slice,
-    #   # self.joint_vels_slice,
-    #   # self.left_toe_pos_slice,
-    #   # self.right_toe_pos_slice
-
-    # ) = process_reference_motion(os.getcwd()+"/new_ref_motion")
-    # self.nb_frames_in_one_walk_cycle = int((1/self._config.ctrl_dt) * self.period)
+    if USE_IMITATION_REWARD:
+      self.PRM = PolyReferenceMotion("env/locomotion/open_duck_mini_v2/polynomial_coefficients.json")
 
     # Note: First joint is freejoint.
     # get the range of the joints
@@ -294,20 +275,10 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     )
     push_interval_steps = jp.round(push_interval / self.dt).astype(jp.int32)
 
-    current_reference_motion = self.PRM.get_reference_motion(cmd[0], cmd[1], cmd[2], 0)
-    # current_reference_motion = get_closest_reference_motion(
-    #   self.reference_data_array,
-    #   cmd[0],
-    #   cmd[1],
-    #   cmd[2],
-    #   0,
-    #   self.dx_range,
-    #   self.dy_range,
-    #   self.dtheta_range,
-    #   self.dxs,
-    #   self.dys,
-    #   self.dthetas
-    # )
+    if USE_IMITATION_REWARD:
+      current_reference_motion = self.PRM.get_reference_motion(cmd[0], cmd[1], cmd[2], 0)
+    else:
+      current_reference_motion = jp.zeros(0)
 
     info = {
         "rng": rng,
@@ -357,29 +328,22 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
 
-    state.info["imitation_i"] += 1
-    state.info["imitation_i"] = state.info["imitation_i"] % self.PRM.nb_steps_in_period # not critical, is already moduloed in get_reference_motion
-    # state.info["imitation_i"] = state.info["imitation_i"] % self.nb_frames_in_one_walk_cycle
+    if USE_IMITATION_REWARD:
+      state.info["imitation_i"] += 1
+      state.info["imitation_i"] = state.info["imitation_i"] % self.PRM.nb_steps_in_period # not critical, is already moduloed in get_reference_motion
+    else:
+      state.info["imitation_i"] = 0
 
-    state.info["current_reference_motion"] = self.PRM.get_reference_motion(
-      state.info["command"][0],
-      state.info["command"][1],
-      state.info["command"][2],
-      state.info["imitation_i"]
-    )
-    # state.info["current_reference_motion"] = get_closest_reference_motion(
-    #   self.reference_data_array, 
-    #   state.info["command"][0],
-    #   state.info["command"][1],
-    #   state.info["command"][2],
-    #   state.info["imitation_i"],
-    #   self.dx_range,
-    #   self.dy_range,
-    #   self.dtheta_range,
-    #   self.dxs,
-    #   self.dys,
-    #   self.dthetas
-    # )
+
+    if USE_IMITATION_REWARD:
+      state.info["current_reference_motion"] = self.PRM.get_reference_motion(
+        state.info["command"][0],
+        state.info["command"][1],
+        state.info["command"][2],
+        state.info["imitation_i"]
+      )
+    else:
+      state.info["current_reference_motion"] = jp.zeros(0)
 
     state.info["rng"], push1_rng, push2_rng, action_delay_rng = jax.random.split(
         state.info["rng"], 4
@@ -637,7 +601,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
         #     self._config.reward_config.max_foot_height,
         #     info["command"],
         # ),
-        # "both_feet_up": self._cost_both_feet_up(contact),
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
@@ -674,24 +637,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     error_y = jp.clip(jp.abs(local_vel[1] - commands[1]) - y_tol, 0.0, None)
     lin_vel_error = error_x + jp.square(error_y)
     return jp.nan_to_num(jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma))
-
-  # def _reward_tracking_lin_vel(self, commands, local_vel):
-  #     # commands[:2] -> [x_cmd, y_cmd]
-  #     # local_vel[:2] -> [x_vel, y_vel]
-  #     target = commands[:2]
-  #     actual = local_vel[:2]
-
-  #     # Give a tolerance (e.g. ±0.02 m/s) for the y-velocity:
-  #     tol = 0.02
-  #     # Flatten out the error if |y_vel| < 0.02
-  #     error_y = jp.clip(jp.abs(actual[1] - target[1]) - tol, 0.0, None)
-
-  #     # For x-velocity, do a standard squared error
-  #     error_x = jp.square(actual[0] - target[0])
-
-  #     # Combine them
-  #     lin_vel_error = error_x + jp.square(error_y)
-  #     return jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma)
 
   def _reward_tracking_ang_vel(
       self,
@@ -779,6 +724,9 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     cmd: jax.Array,
 
   ) -> jax.Array:
+    if not USE_IMITATION_REWARD:
+      return jp.nan_to_num(0.0)
+
     # TODO don't reward for moving when the command is zero.
     cmd_norm = jp.linalg.norm(cmd)
 
@@ -868,8 +816,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     joint_pos_rew = -jp.sum(jp.square(joint_pos - ref_joint_pos)) * w_joint_pos
     joint_vel_rew = -jp.sum(jp.square(joint_vel - ref_joint_vels)) * w_joint_vel
 
-    # TODO the ref contact can oscillate a bit around 0 or 1, maybe we should add a threshold
-    # threshold ref_foot_contacts to 1 of > 0.5 and 0 otherwise
     ref_foot_contacts = jp.where(ref_foot_contacts > 0.5, jp.ones_like(ref_foot_contacts), jp.zeros_like(ref_foot_contacts))
     contact_rew = jp.sum(contacts == ref_foot_contacts) * w_contact
 
@@ -969,12 +915,6 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     # cmd_norm = jp.linalg.norm(commands)
     # reward *= cmd_norm > 0.1  # No reward for zero commands.
     return jp.nan_to_num(reward)
-
-  # def _cost_both_feet_up(self, contact: jax.Array) -> jax.Array:
-  #   # contact [0, 0] if both feet are in the air, [1, 1] if both feet are on the ground
-
-  #   both_up = jp.all(contact == 0)
-  #   return jp.nan_to_num(both_up)
 
   def sample_command(self, rng: jax.Array) -> jax.Array:
     rng1, rng2, rng3, rng4 = jax.random.split(rng, 4)

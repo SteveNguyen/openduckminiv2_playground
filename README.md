@@ -15,10 +15,14 @@ uv run test_install.py
 
 If you want to use the [imitation reward](https://la.disneyresearch.com/wp-content/uploads/BD_X_paper.pdf), you can generate reference motion with [this repo](https://github.com/apirrone/Open_Duck_reference_motion_generator)
 
+Then copy `polynomial_coefficients.json` in `env/locomotion/open_duck_mini_v2/` or the relevant robot
+
+You'll also have to set `USE_IMITATION_REWARD=True` in it's `joystick.py` file
+
 Run: 
 
 ```bash
-uv run test_train.py
+uv run train.py
 ```
 
 ## Tensorboard
@@ -26,8 +30,6 @@ uv run test_train.py
 ```bash
 uv run tensorboard --logdir=<yourlogdir>
 ```
-
-
 
 # Eval
 

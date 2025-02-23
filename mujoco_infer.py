@@ -7,7 +7,6 @@ import time
 import argparse
 
 from onnx_infer import OnnxInfer
-# from reference_motion_inference import ReferenceMotion
 from poly_reference_motion import PolyReferenceMotion
 
 parser = argparse.ArgumentParser()
@@ -16,8 +15,6 @@ parser.add_argument("-k", action="store_true", default=False)
 args = parser.parse_args()
 
 NUM_DOFS = 10
-
-# reference_motion = json.load(open("reference_motion/0_processed.json"))
 
 if args.k:
     import pygame
@@ -33,10 +30,8 @@ angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 0.05
 action_scale = 0.5
-# history_len = 0
 
-# RM = ReferenceMotion("new_ref_motion")
-PRM = PolyReferenceMotion("polynomial_coefficients.json")
+PRM = PolyReferenceMotion("env/locomotion/open_duck_mini_v2/polynomial_coefficients.json")
 
 init_pos = np.array(
     [
@@ -151,7 +146,6 @@ def get_obs(
     contacts = get_feet_contacts()
 
     ref = PRM.get_reference_motion(*command, imitation_i)
-    # ref = RM.get_closest_reference_motion(*command, imitation_i)
 
     obs = np.concatenate(
         [
