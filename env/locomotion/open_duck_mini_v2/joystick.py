@@ -134,7 +134,7 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
     self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
 
-    self.PRM = PolyReferenceMotion("polynomial_coefficients_faster_lower.json")
+    self.PRM = PolyReferenceMotion("polynomial_coefficients.json")
 
     # ( 
     #   self.reference_data_array,
