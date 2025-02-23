@@ -874,8 +874,8 @@ class Joystick(open_duck_mini_v2_base.OpenDuckMiniV2Env):
     contact_rew = jp.sum(contacts == ref_foot_contacts) * w_contact
 
     # reward = torso_pos_rew + torso_orientation_rew +  lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
-    # reward = lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
-    reward = joint_pos_rew + joint_vel_rew + contact_rew # trying without the lin and ang vel because they can compete with the tracking rewards
+    reward = lin_vel_xy_rew + lin_vel_z_rew + ang_vel_xy_rew + ang_vel_z_rew + joint_pos_rew + joint_vel_rew + contact_rew
+    # reward = joint_pos_rew + joint_vel_rew + contact_rew # trying without the lin and ang vel because they can compete with the tracking rewards
     reward *= (cmd_norm > 0.01)  # No reward for zero commands.
     return jp.nan_to_num(reward)
 
