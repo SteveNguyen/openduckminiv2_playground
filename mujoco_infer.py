@@ -29,7 +29,7 @@ linearVelocityScale = 1.0
 angularVelocityScale = 1.0
 dof_pos_scale = 1.0
 dof_vel_scale = 0.05
-action_scale = 0.4
+action_scale = 0.3
 
 PRM = PolyReferenceMotion("env/locomotion/open_duck_mini_v2/polynomial_coefficients.json")
 
