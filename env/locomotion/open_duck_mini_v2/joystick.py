@@ -44,7 +44,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=450,
       action_repeat=1,
-      action_scale=0.5,
+      action_scale=0.4,
       dof_vel_scale=0.05,
       history_len=0,
       soft_joint_pos_limit_factor=0.95,
@@ -78,7 +78,7 @@ def default_config() -> config_dict.ConfigDict:
               base_y_swing=0.0,
               # Energy related rewards.
               torques=-1.0e-3,
-              action_rate=-0.75,  # was -1.5
+              action_rate=-0.6,  # was -1.5
               energy=0.0,
               # Feet related rewards.
               feet_clearance=0.0,
@@ -87,7 +87,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_height=0.0,
               # feet_phase=0.0,
               # Other rewards.
-              stand_still=-0.3,  # was -1.0 TODO try to relax this a bit ?
+              stand_still=-0.2,  # was -1.0 TODO try to relax this a bit ?
               alive=20.0,
               termination=0.0,
               imitation=1.0,
