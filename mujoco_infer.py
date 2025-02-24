@@ -68,7 +68,7 @@ policy = OnnxInfer(args.onnx_model_path, awd=True)
 
 COMMANDS_RANGE_X = [-0.1, 0.15]
 COMMANDS_RANGE_Y = [-0.2, 0.2]
-COMMANDS_RANGE_THETA = [-0.5, 0.5]
+COMMANDS_RANGE_THETA = [-0.5, 0.5] # [-1.0, 1.0]
 
 last_action = np.zeros(NUM_DOFS)
 last_last_action = np.zeros(NUM_DOFS)

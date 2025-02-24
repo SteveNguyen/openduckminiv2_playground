@@ -123,6 +123,9 @@ class PolyReferenceMotion:
                 coeffs.append(jp.flip(jp.array(v)))
             _data[dx][dy][dtheta] = coeffs
 
+        # print(self.dtheta_range)
+        # exit()
+
         self.dxs = sorted(self.dxs)
         self.dys = sorted(self.dys)
         self.dthetas = sorted(self.dthetas)
