@@ -109,27 +109,55 @@ obses_names = [
     "vel_" + str(isaac_joints_order[8]),
     "vel_" + str(isaac_joints_order[9]),
     # action
-    "action_" + str(isaac_joints_order[0]),
-    "action_" + str(isaac_joints_order[1]),
-    "action_" + str(isaac_joints_order[2]),
-    "action_" + str(isaac_joints_order[3]),
-    "action_" + str(isaac_joints_order[4]),
-    "action_" + str(isaac_joints_order[5]),
-    "action_" + str(isaac_joints_order[6]),
-    "action_" + str(isaac_joints_order[7]),
-    "action_" + str(isaac_joints_order[8]),
-    "action_" + str(isaac_joints_order[9]),
+    "last_action_" + str(isaac_joints_order[0]),
+    "last_action_" + str(isaac_joints_order[1]),
+    "last_action_" + str(isaac_joints_order[2]),
+    "last_action_" + str(isaac_joints_order[3]),
+    "last_action_" + str(isaac_joints_order[4]),
+    "last_action_" + str(isaac_joints_order[5]),
+    "last_action_" + str(isaac_joints_order[6]),
+    "last_action_" + str(isaac_joints_order[7]),
+    "last_action_" + str(isaac_joints_order[8]),
+    "last_action_" + str(isaac_joints_order[9]),
+
+    "last_last_action_" + str(isaac_joints_order[0]),
+    "last_last_action_" + str(isaac_joints_order[1]),
+    "last_last_action_" + str(isaac_joints_order[2]),
+    "last_last_action_" + str(isaac_joints_order[3]),
+    "last_last_action_" + str(isaac_joints_order[4]),
+    "last_last_action_" + str(isaac_joints_order[5]),
+    "last_last_action_" + str(isaac_joints_order[6]),
+    "last_last_action_" + str(isaac_joints_order[7]),
+    "last_last_action_" + str(isaac_joints_order[8]),
+    "last_last_action_" + str(isaac_joints_order[9]),
+
+    "last_last_last_action_" + str(isaac_joints_order[0]),
+    "last_last_last_action_" + str(isaac_joints_order[1]),
+    "last_last_last_action_" + str(isaac_joints_order[2]),
+    "last_last_last_action_" + str(isaac_joints_order[3]),
+    "last_last_last_action_" + str(isaac_joints_order[4]),
+    "last_last_last_action_" + str(isaac_joints_order[5]),
+    "last_last_last_action_" + str(isaac_joints_order[6]),
+    "last_last_last_action_" + str(isaac_joints_order[7]),
+    "last_last_last_action_" + str(isaac_joints_order[8]),
+    "last_last_last_action_" + str(isaac_joints_order[9]),
     # phase
-    "phase1_cos",
-    "phase1_sin",
-    "phase2_cos",
-    "phase2_sin",
+    # "phase1_cos",
+    # "phase1_sin",
+    # "phase2_cos",
+    # "phase2_sin",
+    "contact left",
+    "contact right"
+    # ref (ignored)
 ]
+# print(len(obses_names))
+# exit()
 
 
 # obses = [[56 obs at time 0], [56 obs at time 1], ...]
 
-nb_obs = len(obses[0])
+nb_obs = len(obses[0][:-59])
+print(nb_obs)
 nb_rows = int(np.sqrt(nb_obs))
 nb_cols = int(np.ceil(nb_obs / nb_rows))
 

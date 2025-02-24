@@ -7,6 +7,7 @@ import time
 import argparse
 
 from onnx_infer import OnnxInfer
+from poly_reference_motion import PolyReferenceMotion
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-o", "--onnx_model_path", type=str, required=True)
@@ -14,7 +15,6 @@ parser.add_argument("-k", action="store_true", default=False)
 args = parser.parse_args()
 
 NUM_DOFS = 10
-
 
 if args.k:
     import pygame
@@ -28,9 +28,10 @@ if args.k:
 linearVelocityScale = 1.0
 angularVelocityScale = 1.0
 dof_pos_scale = 1.0
-dof_vel_scale = 1.0
+dof_vel_scale = 0.05
 action_scale = 0.5
-history_len = 0
+
+PRM = PolyReferenceMotion("env/locomotion/open_duck_mini_v2/polynomial_coefficients.json")
 
 init_pos = np.array(
     [
@@ -65,15 +66,13 @@ mujoco.mj_step(model, data)
 
 policy = OnnxInfer(args.onnx_model_path, awd=True)
 
-COMMANDS_RANGE_X = [-0.2, 0.3]
+COMMANDS_RANGE_X = [-0.1, 0.15]
 COMMANDS_RANGE_Y = [-0.2, 0.2]
-COMMANDS_RANGE_THETA = [-0.5, 0.5]
+COMMANDS_RANGE_THETA = [-0.5, 0.5] # [-1.0, 1.0]
 
-# COMMANDS_RANGE_X = [0., 0.1]
-# COMMANDS_RANGE_Y = [0, 0]
-# COMMANDS_RANGE_THETA = [0, 0]
-
-prev_action = np.zeros(NUM_DOFS)
+last_action = np.zeros(NUM_DOFS)
+last_last_action = np.zeros(NUM_DOFS)
+last_last_last_action = np.zeros(NUM_DOFS)
 commands = [0.0, 0.0, 0.0]
 decimation = 10
 data.qpos[3 : 3 + 4] = [1, 0, 0.0, 0]
@@ -82,24 +81,15 @@ data.qpos[7:] = init_pos
 data.ctrl[:] = init_pos
 
 
-
 gyro_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "gyro")
 gyro_dimensions = 3
 linvel_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "local_linvel")
 linvel_dimensions = 3
-# gravity_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "upvector")
-# gravity_dimensions = 3
 
 
 imu_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "imu")
-gait_freq = 2
-control_dt = model.opt.timestep * decimation
-phase_dt = 2 * np.pi * control_dt * gait_freq
-current_phase = np.array([0, np.pi])
 
-qpos_error_history = np.zeros(history_len * NUM_DOFS)
-qvel_history = np.zeros(history_len * NUM_DOFS)
-gravity_history = np.zeros(history_len * 3)
+imitation_i = 0
 
 
 def get_sensor(model, data, name, dimensions):
@@ -119,54 +109,55 @@ def get_gravity(data):
     return data.site_xmat[imu_site_id].reshape((3, 3)).T @ np.array([0, 0, -1])
 
 
-def get_phase():
-    global current_phase
-    phase_tp1 = current_phase + phase_dt
-    current_phase = np.fmod(phase_tp1 + np.pi, 2 * np.pi) - np.pi
-    cos = np.cos(current_phase)
-    # sin = np.sin(current_phase)
-    return cos
-    # return np.concatenate([cos, sin])
+def check_contact(data, model, body1_name, body2_name):
+    body1_id = data.body(body1_name).id
+    body2_id = data.body(body2_name).id
+
+    for i in range(data.ncon):
+        try:
+            contact = data.contact[i]
+        except Exception as e:
+            return False
+
+        if (
+            model.geom_bodyid[contact.geom1] == body1_id
+            and model.geom_bodyid[contact.geom2] == body2_id
+        ) or (
+            model.geom_bodyid[contact.geom1] == body2_id
+            and model.geom_bodyid[contact.geom2] == body1_id
+        ):
+            return True
+
+    return False
 
 
-phases = []
+def get_feet_contacts():
+    left_contact = check_contact(data, model, "foot_assembly", "floor")
+    right_contact = check_contact(data, model, "foot_assembly_2", "floor")
+    return left_contact, right_contact
+
 def get_obs(
-    data, last_action, command, qvel_history, qpos_error_history, gravity_history
+    data, last_action, command  # , qvel_history, qpos_error_history, gravity_history
 ):
-
-    gyro = get_gyro(data)
-    linvel = get_linvel(data)
     gravity = get_gravity(data)
     joint_angles = data.qpos[7:]
     joint_vel = data.qvel[6:]
-    phase = get_phase()
-    # phases.append(phase)
 
-    if history_len > 0:
-        qvel_history = np.roll(qvel_history, NUM_DOFS)
-        qvel_history[:NUM_DOFS] = joint_vel
+    contacts = get_feet_contacts()
 
-        last_motor_target = init_pos + last_action * action_scale
-        qpos_error = joint_angles - last_motor_target
-        qpos_error_history = np.roll(qpos_error_history, NUM_DOFS)
-        qpos_error_history[:NUM_DOFS] = qpos_error
-
-        gravity_history = np.roll(gravity_history, 3)
-        gravity_history[:3] = gravity
+    ref = PRM.get_reference_motion(*command, imitation_i)
 
     obs = np.concatenate(
         [
-            # linvel,
-            # gyro,
             gravity,
             command,
             joint_angles - init_pos,
-            joint_vel,
+            joint_vel * dof_vel_scale,
             last_action,
-            phase,
-            qpos_error_history,  # is [] if history_len == 0
-            qvel_history,  # is [] if history_len == 0
-            gravity_history,  # is [] if history_len == 0
+            last_last_action,
+            last_last_last_action,
+            contacts,
+            ref,
         ]
     )
 
@@ -200,15 +191,13 @@ def handle_keyboard():
     commands[1] = lin_vel_y
     commands[2] = ang_vel
 
-    print(commands)
+    # print(commands)
 
     pygame.event.pump()  # process event queue
 
 
 saved_obs = []
-
 try:
-
     with mujoco.viewer.launch_passive(
         model, data, show_left_ui=False, show_right_ui=False, key_callback=key_callback
     ) as viewer:
@@ -220,19 +209,21 @@ try:
             mujoco.mj_step(model, data)
 
             counter += 1
+
             if counter % decimation == 0:
+                imitation_i += 1
+                imitation_i = imitation_i % PRM.nb_steps_in_period
                 obs = get_obs(
                     data,
-                    prev_action,
+                    last_action,
                     commands,
-                    qvel_history,
-                    qpos_error_history,
-                    gravity_history,
                 )
                 saved_obs.append(obs)
                 action = policy.infer(obs)
 
-                prev_action = action.copy()
+                last_last_last_action = last_last_action.copy()
+                last_last_action = last_action.copy()
+                last_action = action.copy()
 
                 action = init_pos + action * action_scale
                 data.ctrl = action.copy()
@@ -241,8 +232,6 @@ try:
 
             if args.k:
                 handle_keyboard()
-
-            # pickle.dump(phases, open("phases.pkl", "wb"))
 
             time_until_next_step = model.opt.timestep - (time.time() - step_start)
             if time_until_next_step > 0:

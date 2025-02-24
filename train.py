@@ -10,6 +10,7 @@ import functools
 
 import matplotlib.pyplot as plt
 
+from pathlib import Path
 
 from datetime import datetime
 import os
@@ -26,6 +27,10 @@ from mujoco_playground.config import locomotion_params
 
 from jax import config as jaxconfig
 from tensorboardX import SummaryWriter
+
+# from jax import config
+
+# config.update("jax_enable_x64", True)
 
 # ON CPU?
 # jax.config.update('jax_default_device', jax.devices('cpu')[0])
@@ -132,9 +137,7 @@ print("ENVIRONEMENT LOADED")
 x_data, y_data, y_dataerr = [], [], []
 times = [datetime.now()]
 
-ckpt_path = epath.Path(
-    "/home/apirrone/MISC/openduckminiv2_playground/openduckminiv2_playground/ckpts"
-)
+ckpt_path = Path.cwd() / "ckpts"
 ckpt_path.mkdir(parents=True, exist_ok=True)
 writer = SummaryWriter(log_dir=ckpt_path)
 
@@ -163,6 +166,7 @@ if "network_factory" in ppo_params:
     )
 print(f"PPO PARAMS: {ppo_training_params}")
 # ppo_training_params["num_timesteps"] = 500000000
+ppo_training_params["num_timesteps"] = 300000000
 
 
 def policy_params_fn(current_step, make_policy, params):
